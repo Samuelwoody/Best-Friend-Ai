@@ -368,3 +368,58 @@ Attributes:
 
 Relations:
 - OrchestrationResult is produced by OrchestratorService and consumed by chat response generation layers.
+
+
+## AgentBiography
+Represents the versioned synthetic life-history envelope for an Agent.
+
+Attributes:
+- biography_id
+- agent_id
+- contract_version (v1)
+- generation_method
+- current_version
+- generated_at, updated_at
+- metadata
+
+Relations:
+- AgentBiography belongs to Agent.
+- AgentBiography has many AgentBiographyItems.
+
+## AgentBiographyItem
+Represents one psychologically causal biography event in a typed category.
+
+Attributes:
+- biography_item_id
+- biography_id
+- item_version
+- category (early-environment, emotional-imprinting, difficult-experiences, positive-experiences, educational-and-formative-influences, knowledge-and-cultural-formation, identity-shaping-turning-points)
+- event_summary
+- emotional_imprint
+- current_behavior_effect
+- salience
+- narrative_accessibility
+- temporal_context
+- causal_links
+- metadata
+- created_at, updated_at
+
+Relations:
+- AgentBiographyItem belongs to AgentBiography.
+- AgentBiographyItem has many AgentBiographyItemLinks.
+
+## AgentBiographyItemLink
+Represents structured linkage from a biography item to memory/media/destiny artifacts.
+
+Attributes:
+- link_id
+- biography_item_id
+- target_type
+- target_id
+- relation
+- metadata
+- created_at
+
+Relations:
+- AgentBiographyItemLink belongs to AgentBiographyItem.
+- AgentBiographyItemLink references future Memory/MediaGenerationPlan/Destiny entities by typed target.

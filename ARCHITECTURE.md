@@ -17,12 +17,14 @@
 - `MemoryService`: user memory upsert and retrieval.
 - `OrchestratorService`: deterministic response orchestration pipeline (context gathering, memory retrieval, emotional-state inference, response strategy selection, and assistant message composition).
 - `HumanComplexityLabService` (`server/labService.ts`): scenario catalog, session lifecycle, event tracking, and result summarization for lab simulations.
+- `BiographyEngineService` (`server/biographyService.ts`): deterministic synthetic life-history scaffold generation, biography retrieval for orchestration, revision/versioning, and attachment linkage for memory/media subsystems.
+- `OrchestratorService` (`server/orchestratorService.ts`): orchestration-facing context projection of biography salience and guarded topics.
 
 ## Routing
 
 - `/auth`: registration and login.
 - `/users`: list users and retrieve user.
-- `/agents`: create/list/retrieve agents.
+- `/agents`: create/list/retrieve agents, plus biography generation/retrieval/revision and biography item attachment endpoints.
 - `/chat`: create/list/retrieve conversations, add messages, and execute orchestration pipeline via `/chat/orchestrate`.
 - `/memory`: upsert/list memory entries.
 - `/interaction-analysis`: conversation-level interaction analytics.
@@ -63,3 +65,10 @@
 
 - Existing endpoint `/chat/messages` remains unchanged.
 - New additive endpoint `/chat/messages/orchestrate` adds message persistence plus orchestrated response-context assembly for downstream response generation.
+
+
+## Biography Engine Extension (v1)
+
+- `agent_biographies`, `agent_biography_items`, and `agent_biography_item_links` add structured and queryable biography persistence without collapsing to undifferentiated text.
+- Agent synthesis (`POST /api/agents`) now auto-generates an initial biography scaffold to keep lifecycle integration deterministic and backward compatible (additive response fields only).
+- Orchestration consumers can request a condensed biography context via `/api/orchestration/agents/:agentId/biography-context`.
