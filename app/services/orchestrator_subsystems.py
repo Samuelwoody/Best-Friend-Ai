@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from app.models.orchestration_schemas import (
+    AffectiveComputationResult,
     OrchestrationContext,
     OrchestrationInputPayload,
     SubsystemName,
     SubsystemOutput,
 )
+from app.services.affective_phenomenology_engine import AffectivePhenomenologyEngine
 
 
 class MemorySubsystem:
@@ -35,19 +37,25 @@ class BiographySubsystem:
 
 
 class AffectiveSubsystem:
+    def __init__(self, engine: AffectivePhenomenologyEngine | None = None) -> None:
+        self._engine = engine or AffectivePhenomenologyEngine()
+
     def run(self, payload: OrchestrationInputPayload, context: OrchestrationContext) -> SubsystemOutput:
-        lowered = payload.user_message.lower()
-        tone = "neutral"
-        if any(token in lowered for token in ["sad", "anxious", "angry", "stressed"]):
-            tone = "distressed"
-        elif any(token in lowered for token in ["great", "happy", "excited", "love"]):
-            tone = "positive"
+        result: AffectiveComputationResult = self._engine.compute_current_emotional_state(payload, context)
+        summary = self._engine.build_orchestrator_summary(result)
+        trace_attachment = self._engine.attach_affective_trace(payload, result)
 
         return SubsystemOutput(
             subsystem=SubsystemName.AFFECTIVE_ENGINE,
             enabled=True,
             invoked=True,
-            payload={"detected_tone": tone, "method": "keyword-v1"},
+            payload={
+                "baseline_profile": result.baseline_profile.model_dump(),
+                "current_state": result.current_state.model_dump(),
+                "summary": summary,
+                "trace": result.trace.model_dump(),
+                "trace_attachment": trace_attachment,
+            },
         )
 
 

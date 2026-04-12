@@ -173,16 +173,34 @@ class OrchestratorService:
         context: OrchestrationContext,
         subsystem_outputs: List[SubsystemOutput],
     ) -> FinalAssembledResponseContext:
+        affective_summary = self._extract_affective_summary(subsystem_outputs)
         summary = (
             f"Agent '{context.agent_profile.name}' handling conversation {context.conversation.conversation_id}; "
             f"{context.conversation.total_messages} total messages, "
-            f"{len(context.memory.entries)} memory entries available."
+            f"{len(context.memory.entries)} memory entries available. "
+            f"Affective summary: {affective_summary}"
         )
         return FinalAssembledResponseContext(
             user_message=payload.user_message,
             context_summary=summary,
             subsystem_outputs=subsystem_outputs,
         )
+
+
+    def _extract_affective_summary(self, subsystem_outputs: List[SubsystemOutput]) -> str:
+        for output in subsystem_outputs:
+            if output.subsystem != SubsystemName.AFFECTIVE_ENGINE:
+                continue
+
+            summary = output.payload.get("summary")
+            if isinstance(summary, dict):
+                dominant = summary.get("dominant", [])
+                regulation = summary.get("regulation_style", "unknown")
+                if isinstance(dominant, list) and dominant:
+                    return f"dominant={','.join(dominant)}; regulation={regulation}"
+                return f"regulation={regulation}"
+
+        return "not-available"
 
     def _is_enabled(self, subsystem: SubsystemName) -> bool:
         if not self._feature_flags.enable_orchestrator_core:

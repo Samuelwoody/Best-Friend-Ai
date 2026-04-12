@@ -176,3 +176,31 @@ Versioned interface contract:
 Compatibility notes:
 - Draft save-later API remains additive and backward-compatible.
 - Identity revisions are append-only; latest revision pointer is used for current runtime behavior.
+
+## Active Increment — Affective Phenomenology Engine (April 12, 2026)
+
+Deliverables:
+- Typed affective subsystem with deterministic emotional state composer.
+- Structured emotional atlas seed dataset designed for additive expansion.
+- Orchestrator integration hooks exposing baseline profile, composed state, and affective traces.
+- Test coverage validating reproducible composition and orchestration flow integration.
+
+Owning module/service:
+- `app/services/affective_phenomenology_engine.py`
+- `app/services/orchestrator_subsystems.py`
+
+Upstream dependencies:
+- `AgentService` profile context.
+- `ConversationService` runtime context.
+- `MemoryService` activation context.
+
+Downstream consumers:
+- `POST /chat/messages/orchestrate` clients.
+- Future prompting, voice modulation, audiovisual generation, and communication intelligence runtime layers.
+
+Versioned interface contract:
+- `affective_engine` payload extension under `contract_version: v1` and additive schema evolution only.
+
+Compatibility notes:
+- Existing orchestrator endpoint and message routes remain unchanged.
+- Feature-flag behavior remains intact; affective engine operates only when enabled.

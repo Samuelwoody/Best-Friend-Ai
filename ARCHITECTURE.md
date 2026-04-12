@@ -49,3 +49,23 @@
 - Creation flow contract includes role, personality, relational style, emotional profile, communication style, plus optional worldview depth and interface style.
 - `POST /api/agents` performs deterministic synthesis and stores `currentIdentity` + append-only revision history (`revisions[]`).
 - `GET /api/agents` exposes created agents for manager/list views using same persisted registry state.
+
+## Affective Phenomenology Engine Extensions (April 12, 2026)
+
+- `AffectivePhenomenologyEngine` (`app/services/affective_phenomenology_engine.py`) now owns deterministic affective composition from five signals: baseline profile, biography influence, conversation context, memory activation, and internal parts activation.
+- `AffectiveSubsystem` now delegates to the engine and emits a structured v1 payload containing baseline profile, composed state, orchestrator summary, and trace attachment metadata.
+- `OrchestratorService` now extracts affective summary data into assembled response context so downstream prompting and delivery layers can consume emotional state as a stable contract.
+- `app/data/emotional_atlas.py` introduces an in-repo emotional atlas seed dataset with expandable typed entries (label/subtype/description/body/cognitive/relational/expression/transitions).
+
+Owning module/service:
+- `app/services/affective_phenomenology_engine.py`
+
+Upstream dependencies:
+- `ConversationService`, `MemoryService`, and `AgentService` contexts assembled in `OrchestratorService`.
+
+Downstream consumers:
+- `AffectiveSubsystem` output payload in orchestration responses.
+- Response prompting, voice modulation, audiovisual generation, and communication intelligence modules (via emitted summary + trace contract).
+
+Versioned interface contract:
+- `SubsystemOutput.payload` for `affective_engine` remains additive under `contract_version: v1`; nested keys (`baseline_profile`, `current_state`, `summary`, `trace`, `trace_attachment`) are extensible.

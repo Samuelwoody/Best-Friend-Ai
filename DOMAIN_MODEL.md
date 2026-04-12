@@ -396,3 +396,65 @@ Attributes:
 
 Relations:
 - OrchestrationResult is produced by OrchestratorService and consumed by chat response generation layers.
+
+## EmotionalAtlasEntry
+Represents one taxonomy row in the affective phenomenology atlas used by runtime composition.
+
+Attributes:
+- label
+- subtype
+- internal_description
+- body_sensation_analogy
+- cognitive_tendency
+- relational_need
+- expression_style
+- transition_tendencies[]
+
+Relations:
+- EmotionalAtlasEntry is consumed by AffectivePhenomenologyEngine for deterministic state composition.
+
+## BaselineAffectiveProfile
+Represents durable affective defaults inferred from agent identity/biographical framing.
+
+Attributes:
+- profile_version
+- dominant_tendencies[]
+- avoided_emotions[]
+- regulation_styles[]
+- relational_defaults[]
+- expressive_signature
+
+Relations:
+- BaselineAffectiveProfile feeds composed turn-level emotional state.
+
+## ComposedAffectiveState
+Represents runtime emotional assembly for one orchestration pass.
+
+Attributes:
+- state_version
+- dominant_emotions[] (label/subtype/weight/source)
+- mixed_emotions[] (label/subtype/weight/source)
+- avoided_emotions[]
+- regulation_style
+- internal_feeling_description
+- relational_needs[]
+- expression_style
+- transition_tendencies[]
+
+Relations:
+- ComposedAffectiveState is emitted inside Orchestrator subsystem output for affective_engine.
+- ComposedAffectiveState is consumed by response prompting, voice modulation, audiovisual generation, and communication intelligence analysis.
+
+## AffectiveTrace
+Represents explainability and reproducibility metadata for affective composition.
+
+Attributes:
+- trace_version
+- atlas_keys_used[]
+- biography_influence{key->weight}
+- context_influence{key->weight}
+- memory_influence{key->weight}
+- parts_influence{key->weight}
+
+Relations:
+- AffectiveTrace is attached to orchestration output and can be persisted to message/memory layers when enabled by downstream policy.
