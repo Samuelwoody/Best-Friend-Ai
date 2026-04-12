@@ -14,6 +14,7 @@
 - `AgentService`: agent CRUD-oriented operations.
 - `ConversationService`: conversation lifecycle and message appends.
 - `MemoryService`: user memory upsert and retrieval.
+- `InteractionAnalysisService`: deterministic conversation interaction analysis and insight generation.
 
 ## Routing
 
@@ -22,6 +23,7 @@
 - `/agents`: create/list/retrieve agents.
 - `/chat`: create/list/retrieve conversations and add messages.
 - `/memory`: upsert/list memory entries.
+- `/interaction-analysis`: conversation-level interaction analytics.
 
 ## Scalability Notes
 
@@ -29,3 +31,10 @@
 - Stateful in-memory stores are intentionally encapsulated in each service for easy migration to database-backed repositories.
 - Unified `APIResponse[T]` keeps response typing consistent across routers.
 - `ServiceContainer` centralizes service lifecycle and dependency wiring.
+
+
+## Analytics Extensions
+
+- `InteractionAnalysisService`: computes conversation-level interaction analytics (emotional shifts, openness, engagement) and returns deterministic insights derived from user messages.
+- Route group `/interaction-analysis`: read-only analytics endpoint for conversation insights.
+- Dependency flow remains additive: API route -> `InteractionAnalysisService` -> `ConversationService` -> typed models.

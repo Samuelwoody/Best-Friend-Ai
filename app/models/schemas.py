@@ -78,3 +78,24 @@ class MemoryRead(BaseEntity):
     user_id: UUID
     key: str
     value: str
+
+
+class InteractionAnalysisMetric(BaseModel):
+    message_id: UUID
+    sequence_index: int
+    emotional_shift: float
+    openness: float
+    engagement: float
+
+
+class InteractionAnalysisInsight(BaseModel):
+    category: str
+    summary: str
+    confidence: float
+
+
+class InteractionAnalysisReport(BaseModel):
+    conversation_id: UUID
+    analyzed_messages: int
+    metrics: List[InteractionAnalysisMetric] = Field(default_factory=list)
+    insights: List[InteractionAnalysisInsight] = Field(default_factory=list)
