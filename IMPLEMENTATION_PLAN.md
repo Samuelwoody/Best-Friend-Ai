@@ -148,3 +148,31 @@ Versioned interface contract:
 Compatibility notes:
 - Existing `/chat/messages` and conversation routes remain unchanged.
 - New behavior is additive and does not alter persisted schema contracts.
+
+
+## Active Increment — Agent Synthesis Engine (April 12, 2026)
+
+Deliverables:
+- Deterministic synthesis pipeline that transforms creation-flow inputs into structured identity revisions.
+- Agent creation API integration that persists current identity + append-only revision history.
+- Agent listing integration for management surfaces to consume synthesized agents.
+
+Owning module/service:
+- `server/agentSynthesisService.ts`
+- `server/agentRegistryService.ts`
+- `server/index.ts` (`/api/agents`, `/api/agent-drafts`)
+
+Upstream dependencies:
+- Creation wizard payload from `src/components/AgentCreationWizard.tsx`.
+- Typed contract definitions in `src/types/agent.ts`.
+
+Downstream consumers:
+- Agent manager/list UI (`src/pages/AgentsPage.tsx`).
+- Future runtime modules that need structured motivation/perception/regulation seeds.
+
+Versioned interface contract:
+- v1 synthesized identity revision envelope (`revisionVersion`, structured profile fields, seed placeholders), additive evolution only.
+
+Compatibility notes:
+- Draft save-later API remains additive and backward-compatible.
+- Identity revisions are append-only; latest revision pointer is used for current runtime behavior.

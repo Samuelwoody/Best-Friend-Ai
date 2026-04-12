@@ -1,10 +1,3 @@
-import { PageContainer } from '../components/common/PageContainer';
+import { AgentCreationWizard } from '../components/AgentCreationWizard';
 
-export const CreateAgentPage = () => (
-  <PageContainer
-    title="Create Agent"
-    description="Define persona, capabilities, and integrations for a new agent."
-  >
-    <p>This section is ready for a structured multi-step creation workflow.</p>
-  </PageContainer>
-);
+export const CreateAgentPage = () => <AgentCreationWizard />;

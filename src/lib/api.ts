@@ -32,3 +32,9 @@ export async function createAgent(payload: AgentDraft): Promise<Agent> {
 
   return handleResponse<Agent>(response);
 }
+
+export async function listAgents(): Promise<Agent[]> {
+  const response = await fetch('/api/agents');
+  const payload = await handleResponse<{ agents: Agent[] }>(response);
+  return payload.agents;
+}
