@@ -14,6 +14,7 @@
 - `AgentService`: agent CRUD-oriented operations.
 - `ConversationService`: conversation lifecycle and message appends.
 - `MemoryService`: user memory upsert and retrieval.
+- `OrchestratorService`: deterministic response orchestration pipeline (context gathering, memory retrieval, emotional-state inference, response strategy selection, and assistant message composition).
 - `HumanComplexityLabService` (`server/labService.ts`): scenario catalog, session lifecycle, event tracking, and result summarization for lab simulations.
 
 ## Routing
@@ -21,7 +22,7 @@
 - `/auth`: registration and login.
 - `/users`: list users and retrieve user.
 - `/agents`: create/list/retrieve agents.
-- `/chat`: create/list/retrieve conversations and add messages.
+- `/chat`: create/list/retrieve conversations, add messages, and execute orchestration pipeline via `/chat/orchestrate`.
 - `/memory`: upsert/list memory entries.
 - `/api/lab/*`: scenario discovery, session start, event append, completion, and results retrieval.
 

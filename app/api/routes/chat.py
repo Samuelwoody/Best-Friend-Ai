@@ -4,7 +4,14 @@ from uuid import UUID
 from fastapi import APIRouter
 
 from app.core.responses import APIResponse
-from app.models.schemas import ConversationCreate, ConversationRead, MessageCreate, MessageRead
+from app.models.schemas import (
+    ConversationCreate,
+    ConversationRead,
+    MessageCreate,
+    MessageRead,
+    OrchestrationRequest,
+    OrchestrationResult,
+)
 from app.services.container import container
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -20,6 +27,12 @@ def create_conversation(payload: ConversationCreate) -> APIResponse[Conversation
 def add_message(payload: MessageCreate) -> APIResponse[MessageRead]:
     message = container.conversation_service.add_message(payload)
     return APIResponse(message="Message added", data=message)
+
+
+@router.post("/orchestrate", response_model=APIResponse[OrchestrationResult])
+def orchestrate(payload: OrchestrationRequest) -> APIResponse[OrchestrationResult]:
+    result = container.orchestrator_service.orchestrate(payload)
+    return APIResponse(message="Orchestration completed", data=result)
 
 
 @router.get("/conversations", response_model=APIResponse[List[ConversationRead]])
