@@ -268,3 +268,18 @@ Attributes:
 - Soft-delete operational entities first; hard-delete via retention workflows.
 - Memory and conversation deletion must propagate to indexes/embeddings.
 - AuditEvent is append-only and immutable.
+
+
+## InteractionAnalysisReport
+Represents analytics projections generated from conversation messages.
+
+Attributes:
+- report_id (derived at request-time; non-persisted projection)
+- conversation_id
+- analyzed_messages
+- metrics (ordered by message sequence)
+- insights (emotional_shift, openness, engagement summaries)
+
+Relations:
+- InteractionAnalysisReport derives from Conversation and Message entities.
+- InteractionAnalysisReport may be consumed by recommendation, coaching, or monitoring modules.
