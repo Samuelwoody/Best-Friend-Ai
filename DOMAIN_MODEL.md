@@ -397,57 +397,64 @@ Attributes:
 Relations:
 - OrchestrationResult is produced by OrchestratorService and consumed by chat response generation layers.
 
-
-## AgentBiography
-Represents the versioned synthetic life-history envelope for an Agent.
-
-Attributes:
-- biography_id
-- agent_id
-- contract_version (v1)
-- generation_method
-- current_version
-- generated_at, updated_at
-- metadata
-
-Relations:
-- AgentBiography belongs to Agent.
-- AgentBiography has many AgentBiographyItems.
-
-## AgentBiographyItem
-Represents one psychologically causal biography event in a typed category.
+## EmotionalAtlasEntry
+Represents one taxonomy row in the affective phenomenology atlas used by runtime composition.
 
 Attributes:
-- biography_item_id
-- biography_id
-- item_version
-- category (early-environment, emotional-imprinting, difficult-experiences, positive-experiences, educational-and-formative-influences, knowledge-and-cultural-formation, identity-shaping-turning-points)
-- event_summary
-- emotional_imprint
-- current_behavior_effect
-- salience
-- narrative_accessibility
-- temporal_context
-- causal_links
-- metadata
-- created_at, updated_at
+- label
+- subtype
+- internal_description
+- body_sensation_analogy
+- cognitive_tendency
+- relational_need
+- expression_style
+- transition_tendencies[]
 
 Relations:
-- AgentBiographyItem belongs to AgentBiography.
-- AgentBiographyItem has many AgentBiographyItemLinks.
+- EmotionalAtlasEntry is consumed by AffectivePhenomenologyEngine for deterministic state composition.
 
-## AgentBiographyItemLink
-Represents structured linkage from a biography item to memory/media/destiny artifacts.
+## BaselineAffectiveProfile
+Represents durable affective defaults inferred from agent identity/biographical framing.
 
 Attributes:
-- link_id
-- biography_item_id
-- target_type
-- target_id
-- relation
-- metadata
-- created_at
+- profile_version
+- dominant_tendencies[]
+- avoided_emotions[]
+- regulation_styles[]
+- relational_defaults[]
+- expressive_signature
 
 Relations:
-- AgentBiographyItemLink belongs to AgentBiographyItem.
-- AgentBiographyItemLink references future Memory/MediaGenerationPlan/Destiny entities by typed target.
+- BaselineAffectiveProfile feeds composed turn-level emotional state.
+
+## ComposedAffectiveState
+Represents runtime emotional assembly for one orchestration pass.
+
+Attributes:
+- state_version
+- dominant_emotions[] (label/subtype/weight/source)
+- mixed_emotions[] (label/subtype/weight/source)
+- avoided_emotions[]
+- regulation_style
+- internal_feeling_description
+- relational_needs[]
+- expression_style
+- transition_tendencies[]
+
+Relations:
+- ComposedAffectiveState is emitted inside Orchestrator subsystem output for affective_engine.
+- ComposedAffectiveState is consumed by response prompting, voice modulation, audiovisual generation, and communication intelligence analysis.
+
+## AffectiveTrace
+Represents explainability and reproducibility metadata for affective composition.
+
+Attributes:
+- trace_version
+- atlas_keys_used[]
+- biography_influence{key->weight}
+- context_influence{key->weight}
+- memory_influence{key->weight}
+- parts_influence{key->weight}
+
+Relations:
+- AffectiveTrace is attached to orchestration output and can be persisted to message/memory layers when enabled by downstream policy.

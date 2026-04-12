@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -75,12 +75,67 @@ class DynamicInternalState(BaseModel):
     latest_role: str
 
 
+
+
+class EmotionalAtlasEntry(BaseModel):
+    label: str
+    subtype: str
+    internal_description: str
+    body_sensation_analogy: str
+    cognitive_tendency: str
+    relational_need: str
+    expression_style: str
+    transition_tendencies: List[str] = Field(default_factory=list)
+
+
+class BaselineAffectiveProfile(BaseModel):
+    profile_version: str = "v1"
+    dominant_tendencies: List[str] = Field(default_factory=list)
+    avoided_emotions: List[str] = Field(default_factory=list)
+    regulation_styles: List[str] = Field(default_factory=list)
+    relational_defaults: List[str] = Field(default_factory=list)
+    expressive_signature: str = "balanced-reflective"
+
+
+class AffectiveConstituent(BaseModel):
+    label: str
+    subtype: str
+    weight: float = Field(ge=0.0, le=1.0)
+    source: str
+
+
+class ComposedAffectiveState(BaseModel):
+    state_version: str = "v1"
+    dominant_emotions: List[AffectiveConstituent] = Field(default_factory=list)
+    mixed_emotions: List[AffectiveConstituent] = Field(default_factory=list)
+    avoided_emotions: List[str] = Field(default_factory=list)
+    regulation_style: str
+    internal_feeling_description: str
+    relational_needs: List[str] = Field(default_factory=list)
+    expression_style: str
+    transition_tendencies: List[str] = Field(default_factory=list)
+
+
+class AffectiveTrace(BaseModel):
+    trace_version: str = "v1"
+    atlas_keys_used: List[str] = Field(default_factory=list)
+    biography_influence: Dict[str, float] = Field(default_factory=dict)
+    context_influence: Dict[str, float] = Field(default_factory=dict)
+    memory_influence: Dict[str, float] = Field(default_factory=dict)
+    parts_influence: Dict[str, float] = Field(default_factory=dict)
+
+
+class AffectiveComputationResult(BaseModel):
+    baseline_profile: BaselineAffectiveProfile
+    current_state: ComposedAffectiveState
+    trace: AffectiveTrace
+
 class SubsystemOutput(BaseModel):
     subsystem: SubsystemName
     enabled: bool
     invoked: bool
     contract_version: str = "v1"
-    payload: Dict[str, str] = Field(default_factory=dict)
+    payload: Dict[str, Any] = Field(default_factory=dict)
     note: Optional[str] = None
 
 

@@ -48,29 +48,26 @@
 
 ## Agent Creation and Synthesis Extensions
 
-- `OrchestratorService` (`app/services/orchestrator_service.py`) is the central decision/routing layer for chat orchestration.
-- `app/models/orchestration_schemas.py` defines versioned orchestration contracts: input payload, context, decision result, subsystem outputs, and final assembled response context.
-- Subsystem boundaries are interface-driven (`app/services/orchestration_interfaces.py`) with concrete, replaceable adapters in `app/services/orchestrator_subsystems.py`.
-- Feature flags (`FeatureFlags`) gate orchestrator and subsystem rollout to preserve backward compatibility and controlled release.
+- Creation flow contract includes role, personality, relational style, emotional profile, communication style, plus optional worldview depth and interface style.
+- `POST /api/agents` performs deterministic synthesis and stores `currentIdentity` + append-only revision history (`revisions[]`).
+- `GET /api/agents` exposes created agents for manager/list views using same persisted registry state.
 
-### Orchestration Stages
+## Affective Phenomenology Engine Extensions (April 12, 2026)
 
-1. Gather user context
-2. Gather agent profile context
-3. Gather conversation context
-4. Gather memory context
-5. Gather dynamic internal state
-6. Decide subsystem routing
-7. Assemble downstream response context
+- `AffectivePhenomenologyEngine` (`app/services/affective_phenomenology_engine.py`) now owns deterministic affective composition from five signals: baseline profile, biography influence, conversation context, memory activation, and internal parts activation.
+- `AffectiveSubsystem` now delegates to the engine and emits a structured v1 payload containing baseline profile, composed state, orchestrator summary, and trace attachment metadata.
+- `OrchestratorService` now extracts affective summary data into assembled response context so downstream prompting and delivery layers can consume emotional state as a stable contract.
+- `app/data/emotional_atlas.py` introduces an in-repo emotional atlas seed dataset with expandable typed entries (label/subtype/description/body/cognitive/relational/expression/transitions).
 
-### Chat Integration
+Owning module/service:
+- `app/services/affective_phenomenology_engine.py`
 
-- Existing endpoint `/chat/messages` remains unchanged.
-- New additive endpoint `/chat/messages/orchestrate` adds message persistence plus orchestrated response-context assembly for downstream response generation.
+Upstream dependencies:
+- `ConversationService`, `MemoryService`, and `AgentService` contexts assembled in `OrchestratorService`.
 
+Downstream consumers:
+- `AffectiveSubsystem` output payload in orchestration responses.
+- Response prompting, voice modulation, audiovisual generation, and communication intelligence modules (via emitted summary + trace contract).
 
-## Biography Engine Extension (v1)
-
-- `agent_biographies`, `agent_biography_items`, and `agent_biography_item_links` add structured and queryable biography persistence without collapsing to undifferentiated text.
-- Agent synthesis (`POST /api/agents`) now auto-generates an initial biography scaffold to keep lifecycle integration deterministic and backward compatible (additive response fields only).
-- Orchestration consumers can request a condensed biography context via `/api/orchestration/agents/:agentId/biography-context`.
+Versioned interface contract:
+- `SubsystemOutput.payload` for `affective_engine` remains additive under `contract_version: v1`; nested keys (`baseline_profile`, `current_state`, `summary`, `trace`, `trace_attachment`) are extensible.

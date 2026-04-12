@@ -56,6 +56,14 @@ def test_orchestrator_route_builds_decision_and_context():
     assert "communication_intelligence" in output_names
     assert "counterbalance_engine" in output_names
 
+    affective_output = next(item for item in outputs if item["subsystem"] == "affective_engine")
+    assert affective_output["payload"]["baseline_profile"]["dominant_tendencies"]
+    assert affective_output["payload"]["current_state"]["dominant_emotions"]
+    assert affective_output["payload"]["summary"]["relational_needs"]
+    assert affective_output["payload"]["trace_attachment"]["message_id"]
+
+    assert "Affective summary:" in payload["response_context"]["context_summary"]
+
 
 def test_existing_chat_add_message_route_still_works():
     conversation = container.conversation_service.create_conversation(

@@ -174,34 +174,33 @@ Versioned interface contract:
 - v1 synthesized identity revision envelope (`revisionVersion`, structured profile fields, seed placeholders), additive evolution only.
 
 Compatibility notes:
-- Existing `/chat/messages` endpoint is unchanged.
-- New orchestration path is additive and feature-flag aware for subsystem rollout.
+- Draft save-later API remains additive and backward-compatible.
+- Identity revisions are append-only; latest revision pointer is used for current runtime behavior.
 
-
-## Active Increment — Biography Engine Subsystem (April 12, 2026)
+## Active Increment — Affective Phenomenology Engine (April 12, 2026)
 
 Deliverables:
-- Backend biography engine that generates deterministic synthetic life-history scaffolds with psychologically causal structure.
-- Structured persistence contract via `agent_biographies`, `agent_biography_items`, and `agent_biography_item_links`.
-- Agent synthesis integration so newly created agents receive biography scaffolds by default.
-- Internal retrieval/revision/attachment interfaces and orchestration-facing biography context endpoint.
+- Typed affective subsystem with deterministic emotional state composer.
+- Structured emotional atlas seed dataset designed for additive expansion.
+- Orchestrator integration hooks exposing baseline profile, composed state, and affective traces.
+- Test coverage validating reproducible composition and orchestration flow integration.
 
 Owning module/service:
-- `server/biographyService.ts`
-- `server/orchestratorService.ts`
-- `server/index.ts`
+- `app/services/affective_phenomenology_engine.py`
+- `app/services/orchestrator_subsystems.py`
 
 Upstream dependencies:
-- Agent creation flow (`POST /api/agents`)
-- Core API host (`server/index.ts`)
+- `AgentService` profile context.
+- `ConversationService` runtime context.
+- `MemoryService` activation context.
 
 Downstream consumers:
-- Orchestration pipelines requiring biography context
-- Future memory/media and destiny systems via biography item links
+- `POST /chat/messages/orchestrate` clients.
+- Future prompting, voice modulation, audiovisual generation, and communication intelligence runtime layers.
 
 Versioned interface contract:
-- Biography payload contract version `v1` with additive-only field evolution.
+- `affective_engine` payload extension under `contract_version: v1` and additive schema evolution only.
 
 Compatibility notes:
-- Existing agent creation input contract is unchanged; biography metadata is additive in response payloads.
-- Database migration is additive; no destructive changes to existing tables.
+- Existing orchestrator endpoint and message routes remain unchanged.
+- Feature-flag behavior remains intact; affective engine operates only when enabled.
