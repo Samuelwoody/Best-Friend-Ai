@@ -1,0 +1,165 @@
+:root {
+  color-scheme: dark;
+  --bg: #111827;
+  --panel: #1f2937;
+  --muted: #9ca3af;
+  --text: #f3f4f6;
+  --accent: #3b82f6;
+  --error: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar,
+.chat-panel {
+  padding: 1rem;
+}
+
+.sidebar {
+  border-right: 1px solid #374151;
+}
+
+.sidebar-header,
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.conversation-list {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.conversation-list button {
+  width: 100%;
+  text-align: left;
+  background: #111827;
+  color: var(--text);
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+}
+
+.conversation-list button.active {
+  border-color: var(--accent);
+}
+
+.chat-panel {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 0.75rem;
+}
+
+.status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.status.loading {
+  color: #fbbf24;
+}
+
+.message-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  background: #0f172a;
+}
+
+.message-row {
+  display: flex;
+}
+
+.message-row.user {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: 80%;
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  white-space: pre-wrap;
+}
+
+.message-row.user .bubble {
+  background: #2563eb;
+}
+
+.composer {
+  display: flex;
+  gap: 0.6rem;
+}
+
+textarea {
+  flex: 1;
+  resize: vertical;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  background: #111827;
+  color: var(--text);
+  padding: 0.7rem;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #374151;
+}
+
+.error-banner {
+  border: 1px solid #7f1d1d;
+  background: #3f1212;
+  color: var(--error);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid #374151;
+  }
+}
