@@ -94,3 +94,30 @@ Deliverables:
 Exit Criteria:
 - Stable release cadence with measurable quality gains.
 - Cost/performance objectives tracked and continuously improved.
+
+
+## Active Increment — Human Complexity Lab (April 12, 2026)
+
+Deliverables:
+- Human Complexity Lab frontend workflow with dedicated Scenario List, Simulation, and Results pages.
+- Backend lab module exposing scenario catalog, session tracking, event capture, and result computation endpoints.
+- Typed frontend/backed contracts for lab scenarios, session events, and completion results.
+
+Owning module/service:
+- `server/labService.ts` (session orchestration)
+- `src/pages/Lab*` + `src/lib/labApi.ts` (UI + integration)
+
+Upstream dependencies:
+- Existing Express API host (`server/index.ts`)
+- React Router app shell (`src/router/AppRouter.tsx`)
+
+Downstream consumers:
+- Lab-facing UI routes (`/lab/scenarios`, `/lab/simulation/:sessionId`, `/lab/results/:sessionId`)
+
+Versioned interface contract:
+- v1 route family under `/api/lab/*` with additive payload evolution policy.
+
+Compatibility notes:
+- Additive-only API extension; existing `/api/agents` and `/api/agent-drafts` contracts remain unchanged.
+- Session state retained in-memory; database persistence can be introduced behind same route contract in later phases.
+
