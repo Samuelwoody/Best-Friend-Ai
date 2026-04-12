@@ -1,48 +1,78 @@
-from app.models.schemas import AgentCreate, ConversationCreate, MemoryCreate, OrchestrationRequest, UserCreate
-from app.services.container import ServiceContainer
+from fastapi.testclient import TestClient
+
+from app.main import app
+from app.models.schemas import AgentCreate, ConversationCreate, MemoryCreate
+from app.services.container import container
+
+client = TestClient(app)
 
 
-def test_orchestrator_pipeline_connects_modules():
-    container = ServiceContainer()
-
-    user = container.user_service.create_user(
-        UserCreate(
-            email="jane@example.com",
-            password="secret123",
-            full_name="Jane User",
-        )
-    )
+def test_orchestrator_route_builds_decision_and_context():
     agent = container.agent_service.create_agent(
         AgentCreate(
-            name="Companion",
-            description="Supportive assistant",
-            owner_id=user.id,
+            name="Orchestrator Test Agent",
+            description="Agent used for orchestration integration tests",
+            owner_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
         )
     )
+
     conversation = container.conversation_service.create_conversation(
-        ConversationCreate(user_id=user.id, agent_id=agent.id)
+        ConversationCreate(
+            user_id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+            agent_id=agent.id,
+        )
     )
+
     container.memory_service.upsert_memory(
         MemoryCreate(
-            user_id=user.id,
-            key="travel_preference",
-            value="You enjoy mountain trips during weekends",
+            user_id=conversation.user_id,
+            key="preferred_style",
+            value="encouraging",
         )
     )
 
-    result = container.orchestrator_service.orchestrate(
-        OrchestrationRequest(
-            conversation_id=conversation.id,
-            user_message="I am stressed but want to plan a mountain weekend.",
+    response = client.post(
+        "/chat/messages/orchestrate",
+        json={
+            "conversation_id": str(conversation.id),
+            "role": "user",
+            "content": "I feel anxious about tomorrow. Can you help me prepare?",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()["data"]["orchestration"]
+
+    assert payload["contract_version"] == "v1"
+    assert "user_context" in payload["stages_completed"]
+    assert "subsystem_routing" in payload["stages_completed"]
+
+    selected = set(payload["decision"]["selected_subsystems"])
+    assert "memory_engine" in selected
+    assert "intentional_core" in selected
+
+    outputs = payload["subsystem_outputs"]
+    output_names = {item["subsystem"] for item in outputs}
+    assert "communication_intelligence" in output_names
+    assert "counterbalance_engine" in output_names
+
+
+def test_existing_chat_add_message_route_still_works():
+    conversation = container.conversation_service.create_conversation(
+        ConversationCreate(
+            user_id="cccccccc-cccc-cccc-cccc-cccccccccccc",
+            agent_id="dddddddd-dddd-dddd-dddd-dddddddddddd",
         )
     )
 
-    refreshed = container.conversation_service.get_conversation(conversation.id)
+    response = client.post(
+        "/chat/messages",
+        json={
+            "conversation_id": str(conversation.id),
+            "role": "user",
+            "content": "Hello there",
+        },
+    )
 
-    assert refreshed.messages[-2].role == "user"
-    assert refreshed.messages[-1].role == "assistant"
-    assert result.trace.context.agent_name == "Companion"
-    assert result.trace.emotional_state.primary_emotion == "negative"
-    assert result.trace.retrieved_memories
-    assert result.trace.response_strategy.tone == "empathetic"
-    assert result.assistant_message.id == refreshed.messages[-1].id
+    assert response.status_code == 200
+    assert response.json()["data"]["content"] == "Hello there"
