@@ -1,0 +1,10 @@
+{
+  "name": "best-friend-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Streaming chat UI with persistent conversations",
+  "scripts": {
+    "start": "node src/server.js",
+    "check": "node --check src/server.js && node --check src/conversationStore.js && node --check src/chatService.js"
+  }
+}
