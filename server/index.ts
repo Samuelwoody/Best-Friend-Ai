@@ -2,21 +2,16 @@ import cors from 'cors';
 import express from 'express';
 import { z } from 'zod';
 import {
+  BiographyEngineService,
+  biographyLinkPayloadSchema,
+  biographyRevisionSchema
+} from './biographyService';
+import {
   HumanComplexityLabService,
   sessionEventSchema,
   startSessionSchema
 } from './labService';
-import {
-  communicationStyleEnum,
-  emotionalProfileEnum,
-  finalAgentCreationSchema,
-  relationalStyleEnum,
-  roleEnum,
-  AgentSynthesisService,
-  interfaceStyleEnum,
-  worldviewDepthEnum
-} from './agentSynthesisService';
-import { AgentRegistryService } from './agentRegistryService';
+import { OrchestratorService } from './orchestratorService';
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
@@ -40,12 +35,26 @@ const draftUpdateSchema = z.object({
   data: draftSchema
 });
 
+const finalAgentSchema = z.object({
+  role: roleEnum,
+  personality: z.string().min(10),
+  relationalStyle: relationalStyleEnum,
+  emotionalProfile: emotionalProfileEnum,
+  communicationStyle: communicationStyleEnum
+});
+
+const biographyRegenerateSchema = z.object({
+  forceRegenerate: z.boolean().default(false)
+});
+
 type AgentDraft = z.infer<typeof draftSchema>;
 
 const drafts = new Map<string, AgentDraft>();
 const synthesisService = new AgentSynthesisService();
 const agentRegistry = new AgentRegistryService(synthesisService);
 const labService = new HumanComplexityLabService();
+const biographyEngine = new BiographyEngineService();
+const orchestratorService = new OrchestratorService(biographyEngine);
 
 app.post('/api/agent-drafts/:sessionId', (req, res) => {
   const { sessionId } = req.params;
@@ -69,12 +78,114 @@ app.post('/api/agents', (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
 
-  const createdAgent = agentRegistry.createAgent(parsed.data);
-  return res.status(201).json(createdAgent);
+  const agent: Agent = {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    ...parsed.data
+  };
+
+  agents.push(agent);
+  const biography = biographyEngine.generateInitialBiography({
+    agentId: agent.id,
+    ...parsed.data
+  });
+
+  return res.status(201).json({
+    ...agent,
+    biographyId: biography.biographyId,
+    biographyVersion: biography.version
+  });
 });
 
-app.get('/api/agents', (_req, res) => {
-  return res.status(200).json({ agents: agentRegistry.listAgents() });
+app.post('/api/agents/:agentId/biography/generate', (req, res) => {
+  const agent = agents.find((candidate) => candidate.id === req.params.agentId);
+  if (!agent) {
+    return res.status(404).json({ error: 'Agent not found' });
+  }
+
+  const parsed = biographyRegenerateSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+
+  if (!parsed.data.forceRegenerate) {
+    const biography = biographyEngine.generateInitialBiography({
+      agentId: agent.id,
+      role: agent.role,
+      personality: agent.personality,
+      relationalStyle: agent.relationalStyle,
+      emotionalProfile: agent.emotionalProfile,
+      communicationStyle: agent.communicationStyle
+    });
+
+    return res.status(201).json({ biography });
+  }
+
+  const current = biographyEngine.getBiography(agent.id);
+  if (current) {
+    return res.status(409).json({
+      error: 'Biography already exists. Forced regeneration requires migration-safe strategy.'
+    });
+  }
+
+  const biography = biographyEngine.generateInitialBiography({
+    agentId: agent.id,
+    role: agent.role,
+    personality: agent.personality,
+    relationalStyle: agent.relationalStyle,
+    emotionalProfile: agent.emotionalProfile,
+    communicationStyle: agent.communicationStyle
+  });
+
+  return res.status(201).json({ biography });
+});
+
+app.get('/api/agents/:agentId/biography', (req, res) => {
+  const biography = biographyEngine.getBiography(req.params.agentId);
+  if (!biography) {
+    return res.status(404).json({ error: 'Biography not found' });
+  }
+
+  return res.status(200).json({ biography });
+});
+
+app.patch('/api/agents/:agentId/biography/items/:itemId', (req, res) => {
+  const parsed = biographyRevisionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+
+  try {
+    const biography = biographyEngine.reviseBiographyItem(req.params.agentId, req.params.itemId, parsed.data);
+    return res.status(200).json({ biography });
+  } catch (error) {
+    return res.status(404).json({ error: error instanceof Error ? error.message : 'Unable to revise biography item' });
+  }
+});
+
+app.post('/api/agents/:agentId/biography/items/:itemId/attachments', (req, res) => {
+  const parsed = biographyLinkPayloadSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+
+  try {
+    const biography = biographyEngine.attachBiographyItem(req.params.agentId, req.params.itemId, parsed.data);
+    return res.status(201).json({ biography });
+  } catch (error) {
+    return res
+      .status(404)
+      .json({ error: error instanceof Error ? error.message : 'Unable to attach biography item reference' });
+  }
+});
+
+app.get('/api/orchestration/agents/:agentId/biography-context', (req, res) => {
+  const biographyContext = orchestratorService.getAgentBiographyContext(req.params.agentId);
+  if (!biographyContext) {
+    return res.status(404).json({ error: 'Biography context not found' });
+  }
+
+  return res.status(200).json({ biographyContext });
 });
 
 app.get('/api/lab/scenarios', (_req, res) => {
@@ -151,7 +262,12 @@ app.get('/api/lab/sessions/:sessionId/results', (req, res) => {
 });
 
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', agents: agentRegistry.listAgents().length, drafts: drafts.size });
+  res.status(200).json({
+    status: 'ok',
+    agents: agents.length,
+    drafts: drafts.size,
+    biographies: agents.filter((agent) => Boolean(biographyEngine.getBiography(agent.id))).length
+  });
 });
 
 app.listen(port, () => {

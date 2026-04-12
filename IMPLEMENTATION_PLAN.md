@@ -174,5 +174,34 @@ Versioned interface contract:
 - v1 synthesized identity revision envelope (`revisionVersion`, structured profile fields, seed placeholders), additive evolution only.
 
 Compatibility notes:
-- Draft save-later API remains additive and backward-compatible.
-- Identity revisions are append-only; latest revision pointer is used for current runtime behavior.
+- Existing `/chat/messages` endpoint is unchanged.
+- New orchestration path is additive and feature-flag aware for subsystem rollout.
+
+
+## Active Increment — Biography Engine Subsystem (April 12, 2026)
+
+Deliverables:
+- Backend biography engine that generates deterministic synthetic life-history scaffolds with psychologically causal structure.
+- Structured persistence contract via `agent_biographies`, `agent_biography_items`, and `agent_biography_item_links`.
+- Agent synthesis integration so newly created agents receive biography scaffolds by default.
+- Internal retrieval/revision/attachment interfaces and orchestration-facing biography context endpoint.
+
+Owning module/service:
+- `server/biographyService.ts`
+- `server/orchestratorService.ts`
+- `server/index.ts`
+
+Upstream dependencies:
+- Agent creation flow (`POST /api/agents`)
+- Core API host (`server/index.ts`)
+
+Downstream consumers:
+- Orchestration pipelines requiring biography context
+- Future memory/media and destiny systems via biography item links
+
+Versioned interface contract:
+- Biography payload contract version `v1` with additive-only field evolution.
+
+Compatibility notes:
+- Existing agent creation input contract is unchanged; biography metadata is additive in response payloads.
+- Database migration is additive; no destructive changes to existing tables.
