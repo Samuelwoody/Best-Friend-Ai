@@ -191,6 +191,36 @@ Attributes:
 - occurred_at
 
 
+
+## AgentIdentity
+Represents the persisted audiovisual identity envelope for an agent.
+
+Attributes:
+- identity_id
+- agent_id
+- contract_version (v1)
+- image_profile (style, palette, prompt, seed, negative_prompt, aspect_ratio)
+- voice_profile (voice_name, timbre, pace, pitch, expressiveness, stability, speaking_style_prompt)
+- generated_at
+
+Relations:
+- AgentIdentity belongs to Agent.
+- AgentIdentity is consumed by MediaGenerationPlan for downstream rendering runtimes.
+
+## MediaGenerationPlan
+Represents executable, versioned tasks that prepare downstream image and voice generation jobs.
+
+Attributes:
+- plan_id
+- agent_id
+- contract_version (v1)
+- tasks[] (image and voice task payloads)
+- prepared_at
+
+Relations:
+- MediaGenerationPlan is derived from AgentIdentity.
+- MediaGenerationPlan is consumed by media workers/orchestrators.
+
 ## LabScenario
 Represents a predefined interpersonal challenge used by Human Complexity Lab.
 

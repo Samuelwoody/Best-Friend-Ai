@@ -120,3 +120,32 @@ Compatibility notes:
 - Additive-only API extension; existing `/api/agents` and `/api/agent-drafts` contracts remain unchanged.
 - Session state retained in-memory; database persistence can be introduced behind same route contract in later phases.
 
+
+## Active Increment — Agent Audiovisual Identity System (April 12, 2026)
+
+Deliverables:
+- Deterministic identity generation for agent image and voice profiles.
+- In-memory identity storage service keyed by agent ID.
+- Versioned media generation preparation contract with image/voice task payloads.
+
+Owning module/service:
+- `app/services/agent_identity_service.py`
+- `app/api/routes/agent_identity.py`
+- `app/models/identity_schemas.py`
+
+Upstream dependencies:
+- Existing agent lifecycle (`app/services/agent_service.py`)
+- FastAPI response envelope contract (`app/core/responses.py`)
+
+Downstream consumers:
+- Media workers consuming prepared image and voice payloads.
+- Any frontend orchestration calling `/agents/{agent_id}/identity/*` endpoints.
+
+Versioned interface contract:
+- `contract_version = "v1"` on identity and media plan payloads.
+- Additive payload evolution policy for task payloads and profile traits.
+
+Compatibility notes:
+- Additive-only API extension under existing `/agents/{agent_id}` route family.
+- Agent CRUD and conversation routes remain unchanged.
+- Feature flag `enable_media_identity_generation` guards identity generation in production environments.
