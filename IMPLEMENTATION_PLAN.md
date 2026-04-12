@@ -150,3 +150,33 @@ Compatibility notes:
 - Additive-only API extension under existing `/agents/{agent_id}` route family.
 - Agent CRUD and conversation routes remain unchanged.
 - Feature flag `enable_media_identity_generation` guards identity generation in production environments.
+
+
+## Active Increment — Orchestrator Core (April 12, 2026)
+
+Deliverables:
+- Backend orchestrator core service coordinating context assembly and internal subsystem routing.
+- Versioned orchestration contracts for input, context, decision, subsystem outputs, and response context assembly.
+- Additive chat orchestration endpoint for downstream response generation pipelines.
+
+Owning module/service:
+- `app/services/orchestrator_service.py`
+- `app/services/orchestration_interfaces.py`
+- `app/services/orchestrator_subsystems.py`
+- `app/models/orchestration_schemas.py`
+
+Upstream dependencies:
+- `ConversationService`
+- `MemoryService`
+- `AgentService`
+
+Downstream consumers:
+- Chat orchestration endpoint `/chat/messages/orchestrate`
+- Future response generation pipelines consuming orchestrated context
+
+Versioned interface contract:
+- Orchestrator payloads expose `contract_version = "v1"` and support additive evolution for subsystem payloads.
+
+Compatibility notes:
+- Existing `/chat/messages` endpoint is unchanged.
+- New orchestration path is additive and feature-flag aware for subsystem rollout.

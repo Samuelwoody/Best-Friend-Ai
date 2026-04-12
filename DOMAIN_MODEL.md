@@ -313,3 +313,58 @@ Attributes:
 Relations:
 - InteractionAnalysisReport derives from Conversation and Message entities.
 - InteractionAnalysisReport may be consumed by recommendation, coaching, or monitoring modules.
+
+
+## OrchestrationRequest
+Represents the orchestration input envelope for one message-turn decision pass.
+
+Attributes:
+- conversation_id
+- user_id
+- agent_id
+- message_id
+- user_message
+- requested_capabilities[]
+- metadata
+
+Relations:
+- OrchestrationRequest references Conversation, User, Agent, and Message.
+- OrchestrationRequest is consumed by OrchestratorService.
+
+## OrchestrationContext
+Represents assembled runtime context used to coordinate internal agent subsystems.
+
+Attributes:
+- user
+- agent_profile
+- conversation
+- memory
+- dynamic_state
+
+Relations:
+- OrchestrationContext aggregates snapshots from User, Agent, Conversation, and Memory entities.
+
+## OrchestrationDecision
+Represents routing decisions for internal subsystem execution.
+
+Attributes:
+- selected_subsystems[]
+- skipped_subsystems[]
+- rationale
+
+Relations:
+- OrchestrationDecision drives execution against subsystem interfaces (memory, biography, affective, intentional, counterbalance, destiny, communication intelligence).
+
+## OrchestrationResult
+Represents assembled downstream response context contract for response generation modules.
+
+Attributes:
+- contract_version (v1)
+- stages_completed[]
+- context
+- decision
+- subsystem_outputs[]
+- response_context
+
+Relations:
+- OrchestrationResult is produced by OrchestratorService and consumed by chat response generation layers.

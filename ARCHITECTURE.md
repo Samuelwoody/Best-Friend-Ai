@@ -40,3 +40,26 @@
 - `InteractionAnalysisService`: computes conversation-level interaction analytics (emotional shifts, openness, engagement) and returns deterministic insights derived from user messages.
 - Route group `/interaction-analysis`: read-only analytics endpoint for conversation insights.
 - Dependency flow remains additive: API route -> `InteractionAnalysisService` -> `ConversationService` -> typed models.
+
+
+## Orchestrator Core Extension (v1)
+
+- `OrchestratorService` (`app/services/orchestrator_service.py`) is the central decision/routing layer for chat orchestration.
+- `app/models/orchestration_schemas.py` defines versioned orchestration contracts: input payload, context, decision result, subsystem outputs, and final assembled response context.
+- Subsystem boundaries are interface-driven (`app/services/orchestration_interfaces.py`) with concrete, replaceable adapters in `app/services/orchestrator_subsystems.py`.
+- Feature flags (`FeatureFlags`) gate orchestrator and subsystem rollout to preserve backward compatibility and controlled release.
+
+### Orchestration Stages
+
+1. Gather user context
+2. Gather agent profile context
+3. Gather conversation context
+4. Gather memory context
+5. Gather dynamic internal state
+6. Decide subsystem routing
+7. Assemble downstream response context
+
+### Chat Integration
+
+- Existing endpoint `/chat/messages` remains unchanged.
+- New additive endpoint `/chat/messages/orchestrate` adds message persistence plus orchestrated response-context assembly for downstream response generation.
