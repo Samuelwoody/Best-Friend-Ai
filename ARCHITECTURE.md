@@ -12,6 +12,8 @@
 - `AuthService`: registration + login/token flow.
 - `UserService`: user creation, retrieval, listing, and credential validation.
 - `AgentService`: agent CRUD-oriented operations.
+- `AgentSynthesisService` (`server/agentSynthesisService.ts`): deterministic synthesis of structured agent identity from creation-flow inputs (explicit fields + inferred defaults).
+- `AgentRegistryService` (`server/agentRegistryService.ts`): persistence boundary for created agents and identity revision history.
 - `AgentIdentityService`: deterministic audiovisual identity generation, identity storage, and media generation plan preparation.
 - `ConversationService`: conversation lifecycle and message appends.
 - `MemoryService`: user memory upsert and retrieval.
@@ -44,7 +46,7 @@
 - Dependency flow remains additive: API route -> `InteractionAnalysisService` -> `ConversationService` -> typed models.
 
 
-## Orchestrator Core Extension (v1)
+## Agent Creation and Synthesis Extensions
 
 - `OrchestratorService` (`app/services/orchestrator_service.py`) is the central decision/routing layer for chat orchestration.
 - `app/models/orchestration_schemas.py` defines versioned orchestration contracts: input payload, context, decision result, subsystem outputs, and final assembled response context.

@@ -7,6 +7,7 @@ This project uses a structured relational PostgreSQL schema that models core int
 - **users**: end users and account-level metadata.
 - **agents**: configurable AI personas and runtime defaults.
 - **agent_profiles**: versioned profile snapshots for an agent's behavior and persona.
+- **agent_identity_revisions**: append-only synthesized identity revisions (motivation/perception/regulation/narrative/communication seeds).
 - **conversations**: a user-agent session container.
 - **messages**: ordered utterances within a conversation.
 - **memories**: long-term fact/preference store, with version and supersession.
@@ -18,6 +19,7 @@ This project uses a structured relational PostgreSQL schema that models core int
 
 - `agents.owner_user_id -> users.id`
 - `agent_profiles.agent_id -> agents.id`
+- `agent_identity_revisions.agent_id -> agents.id`
 - `conversations.user_id -> users.id`
 - `conversations.agent_id -> agents.id`
 - `messages.conversation_id -> conversations.id`
@@ -43,6 +45,7 @@ This project uses a structured relational PostgreSQL schema that models core int
 
 - **Version columns** are included for evolving records:
   - `agents.current_version`
+  - `agent_identity_revisions.revision_version`
   - `agent_profiles.version` (unique per agent)
   - `memories.version` and `memories.supersedes_id`
   - `simulations.run_version`

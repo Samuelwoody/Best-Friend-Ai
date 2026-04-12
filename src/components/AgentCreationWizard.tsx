@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createAgent, saveAgentDraft } from '../lib/api';
-import type { Agent, AgentDraft, CommunicationStyle, EmotionalProfile, RelationalStyle, RoleType } from '../types/agent';
+import type {
+  Agent,
+  AgentDraft,
+  CommunicationStyle,
+  EmotionalProfile,
+  InterfaceStyle,
+  RelationalStyle,
+  RoleType,
+  WorldviewDepth
+} from '../types/agent';
 import { StepProgress } from './StepProgress';
 
 type StepKey = 'role' | 'personality' | 'relationalStyle' | 'emotionalProfile' | 'communicationStyle';
@@ -47,6 +56,18 @@ const COMMUNICATION_STYLES: Array<{ label: string; value: CommunicationStyle }> 
   { label: 'Humorous', value: 'humorous' }
 ];
 
+const WORLDVIEW_DEPTHS: Array<{ label: string; value: WorldviewDepth }> = [
+  { label: 'Practical', value: 'practical' },
+  { label: 'Balanced', value: 'balanced' },
+  { label: 'Philosophical', value: 'philosophical' }
+];
+
+const INTERFACE_STYLES: Array<{ label: string; value: InterfaceStyle }> = [
+  { label: 'Minimal', value: 'minimal' },
+  { label: 'Guided', value: 'guided' },
+  { label: 'Immersive', value: 'immersive' }
+];
+
 const SESSION_KEY = 'agent-creation-session';
 const LOCAL_DRAFT_KEY = 'agent-creation-draft';
 
@@ -80,7 +101,7 @@ function validateStep(step: number, draft: AgentDraft): boolean {
 
 export function AgentCreationWizard() {
   const [activeStep, setActiveStep] = useState(1);
-  const [draft, setDraft] = useState<AgentDraft>({});
+  const [draft, setDraft] = useState<AgentDraft>({ worldviewDepth: 'balanced', interfaceStyle: 'guided' });
   const [status, setStatus] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
@@ -164,21 +185,33 @@ export function AgentCreationWizard() {
       <p>{currentStep.description}</p>
 
       {currentStep.key === 'role' && (
-        <fieldset>
-          <legend>Select role</legend>
-          {ROLES.map((role) => (
-            <label key={role.value} className="option-row">
-              <input
-                type="radio"
-                name="role"
-                value={role.value}
-                checked={draft.role === role.value}
-                onChange={(event) => setDraft((prev) => ({ ...prev, role: event.target.value as RoleType }))}
-              />
-              {role.label}
-            </label>
-          ))}
-        </fieldset>
+        <>
+          <label className="stacked-input">
+            Agent display name (optional)
+            <input
+              type="text"
+              maxLength={120}
+              placeholder="e.g. Atlas"
+              value={draft.displayName ?? ''}
+              onChange={(event) => setDraft((prev) => ({ ...prev, displayName: event.target.value }))}
+            />
+          </label>
+          <fieldset>
+            <legend>Select role</legend>
+            {ROLES.map((role) => (
+              <label key={role.value} className="option-row">
+                <input
+                  type="radio"
+                  name="role"
+                  value={role.value}
+                  checked={draft.role === role.value}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, role: event.target.value as RoleType }))}
+                />
+                {role.label}
+              </label>
+            ))}
+          </fieldset>
+        </>
       )}
 
       {currentStep.key === 'personality' && (
@@ -235,23 +268,53 @@ export function AgentCreationWizard() {
       )}
 
       {currentStep.key === 'communicationStyle' && (
-        <fieldset>
-          <legend>Choose communication style</legend>
-          {COMMUNICATION_STYLES.map((style) => (
-            <label key={style.value} className="option-row">
-              <input
-                type="radio"
-                name="communication-style"
-                value={style.value}
-                checked={draft.communicationStyle === style.value}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, communicationStyle: event.target.value as CommunicationStyle }))
-                }
-              />
-              {style.label}
-            </label>
-          ))}
-        </fieldset>
+        <>
+          <fieldset>
+            <legend>Choose communication style</legend>
+            {COMMUNICATION_STYLES.map((style) => (
+              <label key={style.value} className="option-row">
+                <input
+                  type="radio"
+                  name="communication-style"
+                  value={style.value}
+                  checked={draft.communicationStyle === style.value}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, communicationStyle: event.target.value as CommunicationStyle }))
+                  }
+                />
+                {style.label}
+              </label>
+            ))}
+          </fieldset>
+
+          <label className="stacked-input">
+            Worldview depth
+            <select
+              value={draft.worldviewDepth ?? 'balanced'}
+              onChange={(event) => setDraft((prev) => ({ ...prev, worldviewDepth: event.target.value as WorldviewDepth }))}
+            >
+              {WORLDVIEW_DEPTHS.map((depth) => (
+                <option key={depth.value} value={depth.value}>
+                  {depth.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="stacked-input">
+            Interface style preference
+            <select
+              value={draft.interfaceStyle ?? 'guided'}
+              onChange={(event) => setDraft((prev) => ({ ...prev, interfaceStyle: event.target.value as InterfaceStyle }))}
+            >
+              {INTERFACE_STYLES.map((style) => (
+                <option key={style.value} value={style.value}>
+                  {style.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
       )}
 
       <div className="action-row">
@@ -277,9 +340,10 @@ export function AgentCreationWizard() {
         <section className="result-card">
           <h3>Agent ready</h3>
           <p>Agent ID: {createdAgent.id}</p>
-          <p>Role: {createdAgent.role}</p>
-          <p>Relational style: {createdAgent.relationalStyle}</p>
-          <p>Communication: {createdAgent.communicationStyle}</p>
+          <p>Name: {createdAgent.name}</p>
+          <p>Role: {createdAgent.currentIdentity.role}</p>
+          <p>Relational style: {createdAgent.currentIdentity.relationalStyle}</p>
+          <p>Revision: v{createdAgent.revisionVersion}</p>
         </section>
       )}
     </div>

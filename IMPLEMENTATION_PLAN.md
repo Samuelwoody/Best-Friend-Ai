@@ -146,35 +146,32 @@ Versioned interface contract:
 - `POST /chat/orchestrate` v1 payload and response models (`OrchestrationRequest`, `OrchestrationResult`), additive evolution only.
 
 Compatibility notes:
-- Additive-only API extension under existing `/agents/{agent_id}` route family.
-- Agent CRUD and conversation routes remain unchanged.
-- Feature flag `enable_media_identity_generation` guards identity generation in production environments.
+- Existing `/chat/messages` and conversation routes remain unchanged.
+- New behavior is additive and does not alter persisted schema contracts.
 
 
-## Active Increment — Orchestrator Core (April 12, 2026)
+## Active Increment — Agent Synthesis Engine (April 12, 2026)
 
 Deliverables:
-- Backend orchestrator core service coordinating context assembly and internal subsystem routing.
-- Versioned orchestration contracts for input, context, decision, subsystem outputs, and response context assembly.
-- Additive chat orchestration endpoint for downstream response generation pipelines.
+- Deterministic synthesis pipeline that transforms creation-flow inputs into structured identity revisions.
+- Agent creation API integration that persists current identity + append-only revision history.
+- Agent listing integration for management surfaces to consume synthesized agents.
 
 Owning module/service:
-- `app/services/orchestrator_service.py`
-- `app/services/orchestration_interfaces.py`
-- `app/services/orchestrator_subsystems.py`
-- `app/models/orchestration_schemas.py`
+- `server/agentSynthesisService.ts`
+- `server/agentRegistryService.ts`
+- `server/index.ts` (`/api/agents`, `/api/agent-drafts`)
 
 Upstream dependencies:
-- `ConversationService`
-- `MemoryService`
-- `AgentService`
+- Creation wizard payload from `src/components/AgentCreationWizard.tsx`.
+- Typed contract definitions in `src/types/agent.ts`.
 
 Downstream consumers:
-- Chat orchestration endpoint `/chat/messages/orchestrate`
-- Future response generation pipelines consuming orchestrated context
+- Agent manager/list UI (`src/pages/AgentsPage.tsx`).
+- Future runtime modules that need structured motivation/perception/regulation seeds.
 
 Versioned interface contract:
-- Orchestrator payloads expose `contract_version = "v1"` and support additive evolution for subsystem payloads.
+- v1 synthesized identity revision envelope (`revisionVersion`, structured profile fields, seed placeholders), additive evolution only.
 
 Compatibility notes:
 - Existing `/chat/messages` endpoint is unchanged.
