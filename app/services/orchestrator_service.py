@@ -1,194 +1,199 @@
 from __future__ import annotations
 
-from typing import List
-from uuid import UUID
+from typing import Dict, List
 
-from app.models.schemas import (
-    EmotionalState,
-    MessageCreate,
-    MessageRead,
+from app.models.orchestration_schemas import (
+    AgentProfileContext,
+    ConversationContext,
+    DynamicInternalState,
+    FeatureFlags,
+    FinalAssembledResponseContext,
+    MemoryContext,
     OrchestrationContext,
-    OrchestrationRequest,
+    OrchestrationDecisionResult,
+    OrchestrationInputPayload,
     OrchestrationResult,
-    OrchestrationTrace,
-    ResponseStrategy,
-    RetrievedMemory,
+    OrchestrationStage,
+    SubsystemName,
+    SubsystemOutput,
+    UserContext,
 )
 from app.services.agent_service import AgentService
 from app.services.conversation_service import ConversationService
 from app.services.memory_service import MemoryService
+from app.services.orchestration_interfaces import (
+    AffectiveEngine,
+    BiographyEngine,
+    CommunicationIntelligenceHook,
+    CounterbalanceEngine,
+    DestinyEngine,
+    IntentionalCore,
+    MemoryEngine,
+)
 
 
 class OrchestratorService:
-    """Coordinates response generation pipeline across conversation, memory, and agent modules."""
+    """Central orchestration layer for routing subsystem context used by response generation."""
 
     def __init__(
         self,
         conversation_service: ConversationService,
         memory_service: MemoryService,
         agent_service: AgentService,
+        memory_engine: MemoryEngine,
+        biography_engine: BiographyEngine,
+        affective_engine: AffectiveEngine,
+        intentional_core: IntentionalCore,
+        counterbalance_engine: CounterbalanceEngine,
+        destiny_engine: DestinyEngine,
+        communication_hook: CommunicationIntelligenceHook,
+        feature_flags: FeatureFlags | None = None,
     ) -> None:
         self._conversation_service = conversation_service
         self._memory_service = memory_service
         self._agent_service = agent_service
+        self._engines: Dict[SubsystemName, object] = {
+            SubsystemName.MEMORY_ENGINE: memory_engine,
+            SubsystemName.BIOGRAPHY_ENGINE: biography_engine,
+            SubsystemName.AFFECTIVE_ENGINE: affective_engine,
+            SubsystemName.INTENTIONAL_CORE: intentional_core,
+            SubsystemName.COUNTERBALANCE_ENGINE: counterbalance_engine,
+            SubsystemName.DESTINY_ENGINE: destiny_engine,
+            SubsystemName.COMMUNICATION_INTELLIGENCE: communication_hook,
+        }
+        self._feature_flags = feature_flags or FeatureFlags()
 
-    def orchestrate(self, payload: OrchestrationRequest) -> OrchestrationResult:
-        """Run deterministic orchestration pipeline and persist user/assistant messages."""
-        conversation = self._conversation_service.get_conversation(payload.conversation_id)
+    def orchestrate(self, payload: OrchestrationInputPayload) -> OrchestrationResult:
+        stages: List[OrchestrationStage] = []
 
-        user_message = self._conversation_service.add_message(
-            MessageCreate(
-                conversation_id=payload.conversation_id,
-                content=payload.user_message,
-                role="user",
-            )
+        context = self._build_context(payload)
+        stages.extend(
+            [
+                OrchestrationStage.USER_CONTEXT,
+                OrchestrationStage.AGENT_PROFILE_CONTEXT,
+                OrchestrationStage.CONVERSATION_CONTEXT,
+                OrchestrationStage.MEMORY_CONTEXT,
+                OrchestrationStage.DYNAMIC_INTERNAL_STATE,
+            ]
         )
-        context = self._gather_context(conversation.id, conversation.user_id, conversation.agent_id)
-        memories = self._retrieve_memory(context.user_id, payload.user_message)
-        emotional_state = self._infer_emotional_state(payload.user_message)
-        strategy = self._build_response_strategy(emotional_state, memories)
 
-        assistant_content = self._compose_response(payload.user_message, context, memories, strategy)
-        assistant_message = self._conversation_service.add_message(
-            MessageCreate(
-                conversation_id=payload.conversation_id,
-                content=assistant_content,
-                role="assistant",
-            )
-        )
+        decision = self._make_decision(payload)
+        stages.append(OrchestrationStage.SUBSYSTEM_ROUTING)
+
+        subsystem_outputs = self._invoke_subsystems(payload, context, decision.selected_subsystems)
+        response_context = self._assemble_response_context(payload, context, subsystem_outputs)
+        stages.append(OrchestrationStage.RESPONSE_CONTEXT_ASSEMBLY)
 
         return OrchestrationResult(
-            assistant_message=assistant_message,
-            trace=OrchestrationTrace(
-                context=context,
-                retrieved_memories=memories,
-                emotional_state=emotional_state,
-                response_strategy=strategy,
-            ),
-            metadata={
-                "pipeline_version": "v1",
-                "created_user_message_id": str(user_message.id),
-                "created_assistant_message_id": str(assistant_message.id),
-            },
+            stages_completed=stages,
+            context=context,
+            decision=decision,
+            subsystem_outputs=subsystem_outputs,
+            response_context=response_context,
         )
 
-    def _gather_context(self, conversation_id: UUID, user_id: UUID, agent_id: UUID) -> OrchestrationContext:
-        conversation = self._conversation_service.get_conversation(conversation_id)
-        agent = self._agent_service.get_agent(agent_id)
+    def _build_context(self, payload: OrchestrationInputPayload) -> OrchestrationContext:
+        conversation = self._conversation_service.get_conversation(payload.conversation_id)
+        agent = self._agent_service.get_agent(payload.agent_id)
+        memories = self._memory_service.list_memories(payload.user_id)
+
+        recent_messages = [f"{m.role}:{m.content}" for m in conversation.messages[-5:]]
+        memory_entries = {memory.key: memory.value for memory in memories}
 
         return OrchestrationContext(
-            conversation_id=conversation.id,
-            user_id=user_id,
-            agent_id=agent_id,
-            agent_name=agent.name,
-            recent_messages=conversation.messages[-5:],
+            user=UserContext(user_id=payload.user_id),
+            agent_profile=AgentProfileContext(
+                agent_id=agent.id,
+                name=agent.name,
+                description=agent.description,
+            ),
+            conversation=ConversationContext(
+                conversation_id=conversation.id,
+                total_messages=len(conversation.messages),
+                recent_messages=recent_messages,
+            ),
+            memory=MemoryContext(entries=memory_entries),
+            dynamic_state=DynamicInternalState(
+                conversation_message_count=len(conversation.messages),
+                latest_role=conversation.messages[-1].role if conversation.messages else "system",
+            ),
         )
 
-    def _retrieve_memory(self, user_id: UUID, message: str) -> List[RetrievedMemory]:
-        query_tokens = {token.lower() for token in message.split() if token.strip()}
-        ranked: List[RetrievedMemory] = []
+    def _make_decision(self, payload: OrchestrationInputPayload) -> OrchestrationDecisionResult:
+        candidate_subsystems = payload.requested_capabilities or [
+            SubsystemName.MEMORY_ENGINE,
+            SubsystemName.BIOGRAPHY_ENGINE,
+            SubsystemName.AFFECTIVE_ENGINE,
+            SubsystemName.INTENTIONAL_CORE,
+            SubsystemName.COUNTERBALANCE_ENGINE,
+            SubsystemName.DESTINY_ENGINE,
+            SubsystemName.COMMUNICATION_INTELLIGENCE,
+        ]
 
-        for memory in self._memory_service.list_memories(user_id):
-            memory_tokens = {token.lower() for token in f"{memory.key} {memory.value}".split() if token.strip()}
-            overlap = query_tokens.intersection(memory_tokens)
-            score = len(overlap) / max(len(query_tokens), 1)
-            if score > 0:
-                ranked.append(
-                    RetrievedMemory(
-                        key=memory.key,
-                        value=memory.value,
-                        relevance_score=round(score, 3),
-                    )
-                )
+        selected: List[SubsystemName] = []
+        skipped: List[SubsystemName] = []
 
-        ranked.sort(key=lambda item: item.relevance_score, reverse=True)
-        return ranked[:3]
+        for subsystem in candidate_subsystems:
+            if self._is_enabled(subsystem):
+                selected.append(subsystem)
+            else:
+                skipped.append(subsystem)
 
-    def _infer_emotional_state(self, message: str) -> EmotionalState:
-        lowered = message.lower()
-        negative_tokens = {"sad", "angry", "upset", "anxious", "stressed", "worried", "hate"}
-        positive_tokens = {"happy", "great", "excited", "love", "good", "grateful", "confident"}
-
-        neg_count = sum(1 for token in negative_tokens if token in lowered)
-        pos_count = sum(1 for token in positive_tokens if token in lowered)
-
-        if neg_count > pos_count:
-            intensity = min(1.0, 0.3 + (0.1 * neg_count))
-            return EmotionalState(
-                primary_emotion="negative",
-                intensity=round(intensity, 2),
-                rationale="Detected negatively charged vocabulary in user input.",
-            )
-
-        if pos_count > neg_count:
-            intensity = min(1.0, 0.3 + (0.1 * pos_count))
-            return EmotionalState(
-                primary_emotion="positive",
-                intensity=round(intensity, 2),
-                rationale="Detected positive sentiment indicators in user input.",
-            )
-
-        return EmotionalState(
-            primary_emotion="neutral",
-            intensity=0.25,
-            rationale="No strong sentiment markers detected.",
+        return OrchestrationDecisionResult(
+            selected_subsystems=selected,
+            skipped_subsystems=skipped,
+            rationale=(
+                "Subsystems are selected using capability request and feature-flag gating; "
+                "disabled engines are intentionally skipped to preserve deterministic routing."
+            ),
         )
 
-    def _build_response_strategy(
+    def _invoke_subsystems(
         self,
-        emotional_state: EmotionalState,
-        memories: List[RetrievedMemory],
-    ) -> ResponseStrategy:
-        if emotional_state.primary_emotion == "negative":
-            tone = "empathetic"
-            goals = [
-                "acknowledge_emotion",
-                "provide_stabilizing_guidance",
-                "invite_clarification",
-            ]
-        elif emotional_state.primary_emotion == "positive":
-            tone = "encouraging"
-            goals = ["reinforce_progress", "offer_next_step"]
-        else:
-            tone = "balanced"
-            goals = ["answer_directly", "offer_optional_follow_up"]
-
-        if memories:
-            goals.append("ground_in_user_memory")
-
-        return ResponseStrategy(
-            tone=tone,
-            goals=goals,
-            safety_notes=[
-                "Avoid unsupported claims.",
-                "Do not expose private memory keys that are not relevant.",
-            ],
-        )
-
-    def _compose_response(
-        self,
-        user_message: str,
+        payload: OrchestrationInputPayload,
         context: OrchestrationContext,
-        memories: List[RetrievedMemory],
-        strategy: ResponseStrategy,
-    ) -> str:
-        memory_hint = ""
-        if memories:
-            memory_hint = f" I remember you mentioned: {memories[0].value}."
+        selected_subsystems: List[SubsystemName],
+    ) -> List[SubsystemOutput]:
+        outputs: List[SubsystemOutput] = []
+        for subsystem in selected_subsystems:
+            runner = self._engines[subsystem]
+            output = runner.run(payload, context)
+            outputs.append(output)
 
-        if strategy.tone == "empathetic":
-            return (
-                f"I hear you. {user_message.strip()} sounds important, and I want to help.{memory_hint} "
-                "Would you like to start with one small next step together?"
-            )
+        for subsystem in [SubsystemName.COUNTERBALANCE_ENGINE, SubsystemName.DESTINY_ENGINE]:
+            if subsystem not in selected_subsystems:
+                runner = self._engines[subsystem]
+                outputs.append(runner.run(payload, context))
 
-        if strategy.tone == "encouraging":
-            return (
-                f"That is great momentum. {user_message.strip()} shows positive progress.{memory_hint} "
-                "If you want, I can help you turn this into a concrete plan."
-            )
+        return outputs
 
-        return (
-            f"Thanks for sharing. Based on what you said, here is a practical response:{memory_hint} "
-            "I can also provide a deeper breakdown if that would help."
+    def _assemble_response_context(
+        self,
+        payload: OrchestrationInputPayload,
+        context: OrchestrationContext,
+        subsystem_outputs: List[SubsystemOutput],
+    ) -> FinalAssembledResponseContext:
+        summary = (
+            f"Agent '{context.agent_profile.name}' handling conversation {context.conversation.conversation_id}; "
+            f"{context.conversation.total_messages} total messages, "
+            f"{len(context.memory.entries)} memory entries available."
         )
+        return FinalAssembledResponseContext(
+            user_message=payload.user_message,
+            context_summary=summary,
+            subsystem_outputs=subsystem_outputs,
+        )
+
+    def _is_enabled(self, subsystem: SubsystemName) -> bool:
+        if not self._feature_flags.enable_orchestrator_core:
+            return False
+
+        return {
+            SubsystemName.MEMORY_ENGINE: self._feature_flags.enable_memory_engine,
+            SubsystemName.BIOGRAPHY_ENGINE: self._feature_flags.enable_biography_engine,
+            SubsystemName.AFFECTIVE_ENGINE: self._feature_flags.enable_affective_engine,
+            SubsystemName.INTENTIONAL_CORE: self._feature_flags.enable_intentional_core,
+            SubsystemName.COUNTERBALANCE_ENGINE: self._feature_flags.enable_counterbalance_engine,
+            SubsystemName.DESTINY_ENGINE: self._feature_flags.enable_destiny_engine,
+            SubsystemName.COMMUNICATION_INTELLIGENCE: self._feature_flags.enable_communication_intelligence_hooks,
+        }[subsystem]
