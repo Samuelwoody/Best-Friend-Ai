@@ -12,6 +12,7 @@
 - `AuthService`: registration + login/token flow.
 - `UserService`: user creation, retrieval, listing, and credential validation.
 - `AgentService`: agent CRUD-oriented operations.
+- `AgentIdentityService`: deterministic audiovisual identity generation, identity storage, and media generation plan preparation.
 - `ConversationService`: conversation lifecycle and message appends.
 - `MemoryService`: user memory upsert and retrieval.
 - `InteractionAnalysisService`: deterministic conversation interaction analysis and insight generation.
@@ -21,6 +22,7 @@
 - `/auth`: registration and login.
 - `/users`: list users and retrieve user.
 - `/agents`: create/list/retrieve agents.
+- `/agents/{agent_id}/identity/*`: generate/fetch audiovisual identity and prepare media generation plans.
 - `/chat`: create/list/retrieve conversations and add messages.
 - `/memory`: upsert/list memory entries.
 - `/interaction-analysis`: conversation-level interaction analytics.
