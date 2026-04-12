@@ -15,15 +15,15 @@
 - `AgentIdentityService`: deterministic audiovisual identity generation, identity storage, and media generation plan preparation.
 - `ConversationService`: conversation lifecycle and message appends.
 - `MemoryService`: user memory upsert and retrieval.
-- `InteractionAnalysisService`: deterministic conversation interaction analysis and insight generation.
+- `OrchestratorService`: deterministic response orchestration pipeline (context gathering, memory retrieval, emotional-state inference, response strategy selection, and assistant message composition).
+- `HumanComplexityLabService` (`server/labService.ts`): scenario catalog, session lifecycle, event tracking, and result summarization for lab simulations.
 
 ## Routing
 
 - `/auth`: registration and login.
 - `/users`: list users and retrieve user.
 - `/agents`: create/list/retrieve agents.
-- `/agents/{agent_id}/identity/*`: generate/fetch audiovisual identity and prepare media generation plans.
-- `/chat`: create/list/retrieve conversations and add messages.
+- `/chat`: create/list/retrieve conversations, add messages, and execute orchestration pipeline via `/chat/orchestrate`.
 - `/memory`: upsert/list memory entries.
 - `/interaction-analysis`: conversation-level interaction analytics.
 
