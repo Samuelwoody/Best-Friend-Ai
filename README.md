@@ -1,29 +1,47 @@
-# Best Friend AI
+# Best Friend AI - Memory System
 
-Best Friend AI is a production-grade, modular platform for building highly personalized AI companionship experiences at internet scale.
+This repository implements a production-oriented memory subsystem designed for agentic conversation runtimes.
 
-## Repository Structure
+## Features
 
-- `frontend/` — user-facing applications and client delivery surfaces.
-- `backend/` — edge APIs, BFF patterns, authn/authz enforcement, and request orchestration.
-- `services/` — independently deployable domain and AI services.
-- `modules/` — reusable domain modules and policy engines.
-- `database/` — schemas, migrations, indexing, and governance artifacts.
-- `shared/` — shared contracts, SDKs, utilities, and standards.
+- Structured memory records with:
+  - emotional weight
+  - relevance score
+  - JSON context payload
+- Linkages to both conversations and agents
+- Retrieval hooks for runtime prompt construction
+- SQLite storage with indexes for scalable filtering and ranking
 
-## Foundational Documents
+## Quick start
 
-- `AGENTS.md` — mandatory development and AI contribution rules.
-- `ARCHITECTURE.md` — high-level system design and service boundaries.
-- `PROJECT_RULES.md` — coding, architecture, and integration constraints.
-- `DOMAIN_MODEL.md` — core entity definitions and relationships.
-- `IMPLEMENTATION_PLAN.md` — phased roadmap to full platform maturity.
+```python
+from memory_system import MemoryStorage, MemoryRetrievalHooks, RetrievalHookInput
 
-## Engineering Intent
+storage = MemoryStorage("memory.db")
+hooks = MemoryRetrievalHooks(storage)
 
-This repository is intentionally prepared for long-term scale:
-- multi-tenant architecture,
-- strict modular boundaries,
-- auditability and safety-first AI orchestration,
-- resilience and observability for millions of users.
+storage.upsert_conversation("conv-123", "Support chat")
+storage.upsert_agent("agent-42", "Companion")
 
+hooks.ingest_event(
+    content="User wants concise summaries",
+    emotional_weight=0.8,
+    relevance_score=0.9,
+    context={"intent": "response-style", "source": "chat"},
+    conversation_id="conv-123",
+    agent_id="agent-42",
+)
+
+prompt_context = hooks.render_for_prompt(
+    RetrievalHookInput(prompt="How should I respond?", conversation_id="conv-123", agent_id="agent-42")
+)
+print(prompt_context)
+```
+
+## Development
+
+Run tests:
+
+```bash
+pytest -q
+```
