@@ -190,6 +190,63 @@ Attributes:
 - metadata
 - occurred_at
 
+
+## LabScenario
+Represents a predefined interpersonal challenge used by Human Complexity Lab.
+
+Attributes:
+- scenario_id
+- title
+- context
+- objective
+- prompt
+- difficulty (introductory, intermediate, advanced)
+- tags[]
+
+Relations:
+- LabScenario has many LabSessions.
+
+## LabSession
+Represents an active or completed simulation run for one participant and scenario.
+
+Attributes:
+- session_id
+- scenario_id
+- participant_id (optional)
+- status (active, completed)
+- started_at
+- completed_at (nullable)
+
+Relations:
+- LabSession belongs to LabScenario.
+- LabSession has many LabSessionEvents.
+- LabSession generates one LabSessionResult on completion.
+
+## LabSessionEvent
+Represents one participant reflection/response captured during a lab session.
+
+Attributes:
+- event_id
+- session_id
+- response_text
+- emotional_state (optional)
+- confidence (0..1, optional)
+- created_at
+
+Relations:
+- LabSessionEvent belongs to LabSession.
+
+## LabSessionResult
+Represents post-session computed metrics used by results views.
+
+Attributes:
+- session_id
+- scenario_id
+- event_count
+- average_confidence (nullable)
+- summary
+- completed_at
+
 ## 3) Relationship Summary
 
 - User 1..* Conversation
@@ -202,6 +259,9 @@ Attributes:
 - PolicyProfile 1..* Agent
 - Conversation 0..* RetrievalSession
 - All mutable entities -> AuditEvent trail
+- LabScenario 1..* LabSession
+- LabSession 1..* LabSessionEvent
+- LabSession 1..1 LabSessionResult
 
 ## 4) Data Lifecycle Considerations
 

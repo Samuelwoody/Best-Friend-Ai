@@ -1,7 +1,13 @@
-import { AgentCreationWizard } from './components/AgentCreationWizard';
+import { BrowserRouter } from 'react-router-dom';
+import { AppRouter } from './router/AppRouter';
+import './styles/global.css';
 
 function App() {
-  return <AgentCreationWizard />;
+  return (
+    <BrowserRouter>
+      <AppRouter />
+    </BrowserRouter>
+  );
 }
 
 export default App;

@@ -14,6 +14,7 @@
 - `AgentService`: agent CRUD-oriented operations.
 - `ConversationService`: conversation lifecycle and message appends.
 - `MemoryService`: user memory upsert and retrieval.
+- `HumanComplexityLabService` (`server/labService.ts`): scenario catalog, session lifecycle, event tracking, and result summarization for lab simulations.
 
 ## Routing
 
@@ -22,6 +23,7 @@
 - `/agents`: create/list/retrieve agents.
 - `/chat`: create/list/retrieve conversations and add messages.
 - `/memory`: upsert/list memory entries.
+- `/api/lab/*`: scenario discovery, session start, event append, completion, and results retrieval.
 
 ## Scalability Notes
 
