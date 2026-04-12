@@ -19,12 +19,14 @@
 - `MemoryService`: user memory upsert and retrieval.
 - `OrchestratorService`: deterministic response orchestration pipeline (context gathering, memory retrieval, emotional-state inference, response strategy selection, and assistant message composition).
 - `HumanComplexityLabService` (`server/labService.ts`): scenario catalog, session lifecycle, event tracking, and result summarization for lab simulations.
+- `BiographyEngineService` (`server/biographyService.ts`): deterministic synthetic life-history scaffold generation, biography retrieval for orchestration, revision/versioning, and attachment linkage for memory/media subsystems.
+- `OrchestratorService` (`server/orchestratorService.ts`): orchestration-facing context projection of biography salience and guarded topics.
 
 ## Routing
 
 - `/auth`: registration and login.
 - `/users`: list users and retrieve user.
-- `/agents`: create/list/retrieve agents; creation now invokes synthesis pipeline and stores revisioned identity envelope.
+- `/agents`: create/list/retrieve agents, plus biography generation/retrieval/revision and biography item attachment endpoints.
 - `/chat`: create/list/retrieve conversations, add messages, and execute orchestration pipeline via `/chat/orchestrate`.
 - `/memory`: upsert/list memory entries.
 - `/interaction-analysis`: conversation-level interaction analytics.
