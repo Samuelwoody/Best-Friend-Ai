@@ -192,6 +192,33 @@ Attributes:
 
 
 
+
+## AgentSyntheticIdentityRevision
+Represents a versioned, structured identity synthesis output created from the agent creation workflow.
+
+Attributes:
+- revision_id
+- agent_id
+- revision_version
+- role
+- personality_structure
+- motivation_profile
+- perception_profile
+- regulation_style
+- relational_style
+- narrative_identity
+- communication_style
+- affective_baseline_seed
+- will_intentional_core_seed
+- biography_seed_placeholders
+- future_trajectory_placeholders
+- source_inputs
+- created_at
+
+Relations:
+- Agent has many AgentSyntheticIdentityRevision records.
+- Agent references one active identity revision for runtime defaults.
+
 ## AgentIdentity
 Represents the persisted audiovisual identity envelope for an agent.
 
@@ -283,6 +310,7 @@ Attributes:
 - Conversation 1..* Message
 - User 1..* Memory
 - Agent 1..* Conversation
+- Agent 1..* AgentSyntheticIdentityRevision
 - Message 0..* ToolExecution
 - Tool 1..* ToolExecution
 - Agent/User *..* Tool via ToolPermission

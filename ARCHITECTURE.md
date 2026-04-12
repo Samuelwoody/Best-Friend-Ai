@@ -12,6 +12,8 @@
 - `AuthService`: registration + login/token flow.
 - `UserService`: user creation, retrieval, listing, and credential validation.
 - `AgentService`: agent CRUD-oriented operations.
+- `AgentSynthesisService` (`server/agentSynthesisService.ts`): deterministic synthesis of structured agent identity from creation-flow inputs (explicit fields + inferred defaults).
+- `AgentRegistryService` (`server/agentRegistryService.ts`): persistence boundary for created agents and identity revision history.
 - `AgentIdentityService`: deterministic audiovisual identity generation, identity storage, and media generation plan preparation.
 - `ConversationService`: conversation lifecycle and message appends.
 - `MemoryService`: user memory upsert and retrieval.
@@ -22,7 +24,7 @@
 
 - `/auth`: registration and login.
 - `/users`: list users and retrieve user.
-- `/agents`: create/list/retrieve agents.
+- `/agents`: create/list/retrieve agents; creation now invokes synthesis pipeline and stores revisioned identity envelope.
 - `/chat`: create/list/retrieve conversations, add messages, and execute orchestration pipeline via `/chat/orchestrate`.
 - `/memory`: upsert/list memory entries.
 - `/interaction-analysis`: conversation-level interaction analytics.
@@ -42,24 +44,8 @@
 - Dependency flow remains additive: API route -> `InteractionAnalysisService` -> `ConversationService` -> typed models.
 
 
-## Orchestrator Core Extension (v1)
+## Agent Creation and Synthesis Extensions
 
-- `OrchestratorService` (`app/services/orchestrator_service.py`) is the central decision/routing layer for chat orchestration.
-- `app/models/orchestration_schemas.py` defines versioned orchestration contracts: input payload, context, decision result, subsystem outputs, and final assembled response context.
-- Subsystem boundaries are interface-driven (`app/services/orchestration_interfaces.py`) with concrete, replaceable adapters in `app/services/orchestrator_subsystems.py`.
-- Feature flags (`FeatureFlags`) gate orchestrator and subsystem rollout to preserve backward compatibility and controlled release.
-
-### Orchestration Stages
-
-1. Gather user context
-2. Gather agent profile context
-3. Gather conversation context
-4. Gather memory context
-5. Gather dynamic internal state
-6. Decide subsystem routing
-7. Assemble downstream response context
-
-### Chat Integration
-
-- Existing endpoint `/chat/messages` remains unchanged.
-- New additive endpoint `/chat/messages/orchestrate` adds message persistence plus orchestrated response-context assembly for downstream response generation.
+- Creation flow contract includes role, personality, relational style, emotional profile, communication style, plus optional worldview depth and interface style.
+- `POST /api/agents` performs deterministic synthesis and stores `currentIdentity` + append-only revision history (`revisions[]`).
+- `GET /api/agents` exposes created agents for manager/list views using same persisted registry state.
