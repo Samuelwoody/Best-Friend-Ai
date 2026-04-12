@@ -4,6 +4,7 @@ from app.services.agent_service import AgentService
 from app.services.auth_service import AuthService
 from app.services.conversation_service import ConversationService
 from app.services.interaction_analysis_service import InteractionAnalysisService
+from app.services.inner_multiplicity_service import InnerMultiplicityService
 from app.services.memory_service import MemoryService
 from app.services.orchestrator_service import OrchestratorService
 from app.services.orchestrator_subsystems import (
@@ -26,6 +27,7 @@ class ServiceContainer:
         self.agent_identity_service = AgentIdentityService()
         self.conversation_service = ConversationService()
         self.memory_service = MemoryService()
+        self.inner_multiplicity_service = InnerMultiplicityService()
         self.interaction_analysis_service = InteractionAnalysisService(self.conversation_service)
         self.orchestrator_service = OrchestratorService(
             conversation_service=self.conversation_service,
@@ -38,6 +40,7 @@ class ServiceContainer:
             counterbalance_engine=CounterbalanceSubsystem(),
             destiny_engine=DestinySubsystem(),
             communication_hook=CommunicationIntelligenceSubsystem(),
+            inner_multiplicity_service=self.inner_multiplicity_service,
             feature_flags=FeatureFlags(),
         )
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -73,6 +73,37 @@ class DynamicInternalState(BaseModel):
     timestamp_utc: datetime = Field(default_factory=datetime.utcnow)
     conversation_message_count: int
     latest_role: str
+    active_parts: List["ActivatedInternalPart"] = Field(default_factory=list)
+    internal_tension_level: float = Field(default=0.0, ge=0.0, le=1.0)
+    internal_tension_summary: str = "stable"
+    active_parts_influence: Dict[str, float] = Field(default_factory=dict)
+
+
+InternalPartType = Literal[
+    "protector",
+    "vulnerable",
+    "logical",
+    "impulsive",
+    "idealistic",
+    "defensive",
+]
+
+
+class InternalPartDefinition(BaseModel):
+    name: str
+    type: InternalPartType
+    role: str
+    triggers: List[str] = Field(default_factory=list)
+    influence_level: float = Field(default=0.4, ge=0.0, le=1.0)
+    emotional_state_interactions: Dict[str, float] = Field(default_factory=dict)
+    biography_interactions: List[str] = Field(default_factory=list)
+    intentional_core_interactions: Dict[str, float] = Field(default_factory=dict)
+
+
+class ActivatedInternalPart(BaseModel):
+    definition: InternalPartDefinition
+    activation_score: float = Field(ge=0.0, le=1.0)
+    activation_reasons: List[str] = Field(default_factory=list)
 
 
 

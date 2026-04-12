@@ -63,7 +63,7 @@ class AffectivePhenomenologyEngine:
         biography_influence = self._infer_biography_influence(context)
         context_influence = self._infer_conversation_context_influence(payload, context)
         memory_influence = self._infer_memory_influence(context)
-        parts_influence = self._infer_internal_parts_influence(payload)
+        parts_influence = self._infer_internal_parts_influence(context)
 
         merged = self._merge_influences(
             baseline=baseline,
@@ -159,18 +159,14 @@ class AffectivePhenomenologyEngine:
                 scores["grounded-calm:regulated-presence"] += 0.18
         return dict(scores)
 
-    def _infer_internal_parts_influence(self, payload: OrchestrationInputPayload) -> Dict[str, float]:
+    def _infer_internal_parts_influence(self, context: OrchestrationContext) -> Dict[str, float]:
+        if context.dynamic_state.active_parts_influence:
+            return context.dynamic_state.active_parts_influence
+
         scores: Dict[str, float] = defaultdict(float)
-        parts = payload.metadata.get("internal_parts", "")
-        lowered = parts.lower()
-        if "protector" in lowered:
-            scores["protective-anger:boundary-defense"] += 0.22
-        if "inner-child" in lowered:
-            scores["longing:attachment-ache"] += 0.2
-        if "critic" in lowered:
-            scores["shame:self-protective-collapse"] += 0.2
-        if "planner" in lowered:
-            scores["hope:future-oriented-resolve"] += 0.18
+        for activated_part in context.dynamic_state.active_parts:
+            for emotion_key, interaction_weight in activated_part.definition.emotional_state_interactions.items():
+                scores[emotion_key] += max(0.0, interaction_weight) * activated_part.activation_score
         return dict(scores)
 
     def _merge_influences(
