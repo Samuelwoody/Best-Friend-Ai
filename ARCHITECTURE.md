@@ -71,3 +71,26 @@ Downstream consumers:
 
 Versioned interface contract:
 - `SubsystemOutput.payload` for `affective_engine` remains additive under `contract_version: v1`; nested keys (`baseline_profile`, `current_state`, `summary`, `trace`, `trace_attachment`) are extensible.
+
+
+## Inner Multiplicity Engine Extensions (April 12, 2026)
+
+- `InnerMultiplicityService` (`app/services/inner_multiplicity_service.py`) introduces typed internal-parts modeling and deterministic activation scoring from conversation context, memory context, and biography cues.
+- `Agent` payload contracts now allow additive `internal_parts[]` definitions, enabling nuanced part-level influence without replacing the base persona contract.
+- `OrchestratorService` enriches `dynamic_state` with active parts, weighted emotion influence map, and internal tension summary/level for downstream response-context assembly.
+- `AffectivePhenomenologyEngine` now consumes orchestrator-computed active-part influence map to integrate multiplicity into affective composition.
+
+Owning module/service:
+- `app/services/inner_multiplicity_service.py`
+
+Upstream dependencies:
+- `AgentService` (agent profile + internal parts)
+- `ConversationService` (live message context)
+- `MemoryService` (memory-derived activation cues)
+
+Downstream consumers:
+- `OrchestratorService` dynamic state assembly and response context summaries.
+- `AffectivePhenomenologyEngine` part-influence blending.
+
+Versioned interface contract:
+- Additive under orchestrator `contract_version: v1`; `DynamicInternalState` now includes `active_parts`, `active_parts_influence`, `internal_tension_level`, and `internal_tension_summary`.

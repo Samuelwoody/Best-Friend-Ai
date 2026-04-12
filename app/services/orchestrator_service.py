@@ -21,6 +21,7 @@ from app.models.orchestration_schemas import (
 from app.services.agent_service import AgentService
 from app.services.conversation_service import ConversationService
 from app.services.memory_service import MemoryService
+from app.services.inner_multiplicity_service import InnerMultiplicityService
 from app.services.orchestration_interfaces import (
     AffectiveEngine,
     BiographyEngine,
@@ -47,6 +48,7 @@ class OrchestratorService:
         counterbalance_engine: CounterbalanceEngine,
         destiny_engine: DestinyEngine,
         communication_hook: CommunicationIntelligenceHook,
+        inner_multiplicity_service: InnerMultiplicityService | None = None,
         feature_flags: FeatureFlags | None = None,
     ) -> None:
         self._conversation_service = conversation_service
@@ -61,6 +63,7 @@ class OrchestratorService:
             SubsystemName.DESTINY_ENGINE: destiny_engine,
             SubsystemName.COMMUNICATION_INTELLIGENCE: communication_hook,
         }
+        self._inner_multiplicity_service = inner_multiplicity_service or InnerMultiplicityService()
         self._feature_flags = feature_flags or FeatureFlags()
 
     def orchestrate(self, payload: OrchestrationInputPayload) -> OrchestrationResult:
@@ -99,6 +102,19 @@ class OrchestratorService:
 
         recent_messages = [f"{m.role}:{m.content}" for m in conversation.messages[-5:]]
         memory_entries = {memory.key: memory.value for memory in memories}
+        biography_snapshot = self._inner_multiplicity_service.build_agent_biography_snapshot(
+            agent_id=agent.id,
+            agent_description=agent.description,
+        )
+        active_parts = self._inner_multiplicity_service.compute_activated_parts(
+            agent=agent,
+            user_message=payload.user_message,
+            memory_entries=memory_entries,
+            agent_biography_snapshot=biography_snapshot,
+        )
+        active_parts_influence = self._inner_multiplicity_service.expose_active_part_influence(active_parts)
+        internal_tension_summary = self._inner_multiplicity_service.summarize_internal_tension(active_parts)
+        internal_tension_level = self._inner_multiplicity_service.compute_internal_tension_level(active_parts)
 
         return OrchestrationContext(
             user=UserContext(user_id=payload.user_id),
@@ -116,6 +132,10 @@ class OrchestratorService:
             dynamic_state=DynamicInternalState(
                 conversation_message_count=len(conversation.messages),
                 latest_role=conversation.messages[-1].role if conversation.messages else "system",
+                active_parts=active_parts,
+                internal_tension_level=internal_tension_level,
+                internal_tension_summary=internal_tension_summary,
+                active_parts_influence=active_parts_influence,
             ),
         )
 
@@ -178,12 +198,23 @@ class OrchestratorService:
             f"Agent '{context.agent_profile.name}' handling conversation {context.conversation.conversation_id}; "
             f"{context.conversation.total_messages} total messages, "
             f"{len(context.memory.entries)} memory entries available. "
-            f"Affective summary: {affective_summary}"
+            f"Affective summary: {affective_summary}. "
+            f"Internal tension: {context.dynamic_state.internal_tension_summary} "
+            f"({context.dynamic_state.internal_tension_level:.2f}); "
+            f"active parts: {self._format_active_parts(context)}"
         )
         return FinalAssembledResponseContext(
             user_message=payload.user_message,
             context_summary=summary,
             subsystem_outputs=subsystem_outputs,
+        )
+
+    def _format_active_parts(self, context: OrchestrationContext) -> str:
+        if not context.dynamic_state.active_parts:
+            return "none"
+        return ",".join(
+            f"{part.definition.type}:{part.activation_score:.2f}"
+            for part in context.dynamic_state.active_parts[:3]
         )
 
 

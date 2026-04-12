@@ -204,3 +204,30 @@ Versioned interface contract:
 Compatibility notes:
 - Existing orchestrator endpoint and message routes remain unchanged.
 - Feature-flag behavior remains intact; affective engine operates only when enabled.
+
+
+## Active Increment — Inner Multiplicity Engine (April 12, 2026)
+
+Deliverables:
+- Typed internal-parts model for agents (`protector`, `vulnerable`, `logical`, `impulsive`, `idealistic`, `defensive`) with role, triggers, influence, and interaction contracts.
+- Deterministic activation scoring service based on user message, memory context, and biography cues.
+- Orchestrator integration exposing active parts, weighted part influence, and internal tension summaries for response-context assembly.
+
+Owning module/service:
+- `app/services/inner_multiplicity_service.py`
+- `app/services/orchestrator_service.py`
+
+Upstream dependencies:
+- `AgentService` read model (`AgentRead.internal_parts`).
+- Runtime context from `ConversationService` and `MemoryService`.
+
+Downstream consumers:
+- Orchestration clients consuming `dynamic_state` and `context_summary`.
+- `AffectivePhenomenologyEngine` for part-derived emotional weighting.
+
+Versioned interface contract:
+- Additive `v1` evolution of orchestrator payload (`DynamicInternalState` fields + `AgentCreate/AgentRead.internal_parts`).
+
+Compatibility notes:
+- Existing agent retrieval contracts remain backward-compatible (new field defaults to empty list).
+- No destructive schema or route behavior changes.

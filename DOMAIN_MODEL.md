@@ -35,6 +35,7 @@ Attributes:
 - owner_user_id (nullable for system agents)
 - name
 - persona_profile
+- internal_parts[] (typed part definitions with role, triggers, influence, and interaction maps)
 - policy_profile_id
 - model_routing_profile_id
 - created_at, updated_at
@@ -42,6 +43,27 @@ Attributes:
 Relations:
 - Agent participates in Conversations.
 - Agent uses ToolPermissions and PolicyProfiles.
+- Agent has many InternalPartProfile entries (stored inline or via linked store).
+
+## InternalPartProfile
+Represents one structured internal part participating in an agent's behavior shaping.
+
+Attributes:
+- part_id (logical/embedded id)
+- agent_id
+- name
+- part_type (protector, vulnerable, logical, impulsive, idealistic, defensive)
+- role
+- triggers[]
+- influence_level (0..1)
+- emotional_state_interactions (emotion_key -> weight)
+- biography_interactions[] (keywords/themes)
+- intentional_core_interactions (intent_key -> weight)
+- created_at, updated_at
+
+Relations:
+- InternalPartProfile belongs to Agent.
+- InternalPartProfile contributes to DynamicInternalState during orchestration.
 
 ## Conversation
 Represents a logical thread of interaction.

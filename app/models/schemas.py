@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
+from app.models.orchestration_schemas import InternalPartDefinition
 
 class BaseEntity(BaseModel):
     id: UUID = Field(default_factory=uuid4)
@@ -37,12 +38,14 @@ class AgentCreate(BaseModel):
     name: str
     description: str
     owner_id: UUID
+    internal_parts: List[InternalPartDefinition] = Field(default_factory=list)
 
 
 class AgentRead(BaseEntity):
     name: str
     description: str
     owner_id: UUID
+    internal_parts: List[InternalPartDefinition] = Field(default_factory=list)
 
 
 class ConversationCreate(BaseModel):
