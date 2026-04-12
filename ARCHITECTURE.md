@@ -15,7 +15,7 @@
 - `AgentIdentityService`: deterministic audiovisual identity generation, identity storage, and media generation plan preparation.
 - `ConversationService`: conversation lifecycle and message appends.
 - `MemoryService`: user memory upsert and retrieval.
-- `HumanComplexityLabService` (`server/labService.ts`): scenario catalog, session lifecycle, event tracking, and result summarization for lab simulations.
+- `InteractionAnalysisService`: deterministic conversation interaction analysis and insight generation.
 
 ## Routing
 
@@ -25,7 +25,7 @@
 - `/agents/{agent_id}/identity/*`: generate/fetch audiovisual identity and prepare media generation plans.
 - `/chat`: create/list/retrieve conversations and add messages.
 - `/memory`: upsert/list memory entries.
-- `/api/lab/*`: scenario discovery, session start, event append, completion, and results retrieval.
+- `/interaction-analysis`: conversation-level interaction analytics.
 
 ## Scalability Notes
 
@@ -33,3 +33,10 @@
 - Stateful in-memory stores are intentionally encapsulated in each service for easy migration to database-backed repositories.
 - Unified `APIResponse[T]` keeps response typing consistent across routers.
 - `ServiceContainer` centralizes service lifecycle and dependency wiring.
+
+
+## Analytics Extensions
+
+- `InteractionAnalysisService`: computes conversation-level interaction analytics (emotional shifts, openness, engagement) and returns deterministic insights derived from user messages.
+- Route group `/interaction-analysis`: read-only analytics endpoint for conversation insights.
+- Dependency flow remains additive: API route -> `InteractionAnalysisService` -> `ConversationService` -> typed models.

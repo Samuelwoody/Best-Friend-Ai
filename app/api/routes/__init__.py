@@ -9,3 +9,5 @@ api_router.include_router(agents.router)
 api_router.include_router(agent_identity.router)
 api_router.include_router(chat.router)
 api_router.include_router(memory.router)
+
+api_router.include_router(interaction_analysis.router)
