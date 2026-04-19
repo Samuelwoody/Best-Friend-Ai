@@ -1,6 +1,5 @@
 {
-  "framework": "vite",
   "rewrites": [
-    { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
+    { "source": "/:path((?!api/|assets/).*)", "destination": "/index.html" }
   ]
 }
