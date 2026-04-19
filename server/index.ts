@@ -2,6 +2,17 @@ import cors from 'cors';
 import express from 'express';
 import { z } from 'zod';
 import {
+  AgentSynthesisService,
+  communicationStyleEnum,
+  emotionalProfileEnum,
+  finalAgentCreationSchema,
+  interfaceStyleEnum,
+  relationalStyleEnum,
+  roleEnum,
+  worldviewDepthEnum
+} from './agentSynthesisService';
+import { AgentRegistryService } from './agentRegistryService';
+import {
   BiographyEngineService,
   biographyLinkPayloadSchema,
   biographyRevisionSchema
@@ -33,14 +44,6 @@ const draftSchema = z.object({
 const draftUpdateSchema = z.object({
   step: z.number().int().min(1).max(5),
   data: draftSchema
-});
-
-const finalAgentSchema = z.object({
-  role: roleEnum,
-  personality: z.string().min(10),
-  relationalStyle: relationalStyleEnum,
-  emotionalProfile: emotionalProfileEnum,
-  communicationStyle: communicationStyleEnum
 });
 
 const biographyRegenerateSchema = z.object({
@@ -78,16 +81,14 @@ app.post('/api/agents', (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
 
-  const agent: Agent = {
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    ...parsed.data
-  };
-
-  agents.push(agent);
+  const agent = agentRegistry.createAgent(parsed.data);
   const biography = biographyEngine.generateInitialBiography({
     agentId: agent.id,
-    ...parsed.data
+    role: parsed.data.role,
+    personality: parsed.data.personality,
+    relationalStyle: parsed.data.relationalStyle,
+    emotionalProfile: parsed.data.emotionalProfile,
+    communicationStyle: parsed.data.communicationStyle
   });
 
   return res.status(201).json({
@@ -97,8 +98,12 @@ app.post('/api/agents', (req, res) => {
   });
 });
 
+app.get('/api/agents', (_req, res) => {
+  return res.status(200).json({ agents: agentRegistry.listAgents() });
+});
+
 app.post('/api/agents/:agentId/biography/generate', (req, res) => {
-  const agent = agents.find((candidate) => candidate.id === req.params.agentId);
+  const agent = agentRegistry.listAgents().find((candidate) => candidate.id === req.params.agentId);
   if (!agent) {
     return res.status(404).json({ error: 'Agent not found' });
   }
@@ -108,16 +113,18 @@ app.post('/api/agents/:agentId/biography/generate', (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
 
-  if (!parsed.data.forceRegenerate) {
-    const biography = biographyEngine.generateInitialBiography({
-      agentId: agent.id,
-      role: agent.role,
-      personality: agent.personality,
-      relationalStyle: agent.relationalStyle,
-      emotionalProfile: agent.emotionalProfile,
-      communicationStyle: agent.communicationStyle
-    });
+  const source = agent.currentIdentity.sourceInputs;
+  const generationInput = {
+    agentId: agent.id,
+    role: source.role,
+    personality: source.personality,
+    relationalStyle: source.relationalStyle,
+    emotionalProfile: source.emotionalProfile,
+    communicationStyle: source.communicationStyle
+  };
 
+  if (!parsed.data.forceRegenerate) {
+    const biography = biographyEngine.generateInitialBiography(generationInput);
     return res.status(201).json({ biography });
   }
 
@@ -128,15 +135,7 @@ app.post('/api/agents/:agentId/biography/generate', (req, res) => {
     });
   }
 
-  const biography = biographyEngine.generateInitialBiography({
-    agentId: agent.id,
-    role: agent.role,
-    personality: agent.personality,
-    relationalStyle: agent.relationalStyle,
-    emotionalProfile: agent.emotionalProfile,
-    communicationStyle: agent.communicationStyle
-  });
-
+  const biography = biographyEngine.generateInitialBiography(generationInput);
   return res.status(201).json({ biography });
 });
 
@@ -262,6 +261,7 @@ app.get('/api/lab/sessions/:sessionId/results', (req, res) => {
 });
 
 app.get('/health', (_req, res) => {
+  const agents = agentRegistry.listAgents();
   res.status(200).json({
     status: 'ok',
     agents: agents.length,

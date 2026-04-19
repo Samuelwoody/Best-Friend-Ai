@@ -186,7 +186,7 @@ export class BiographyEngineService {
     return this.repository.save(updated);
   }
 
-  attachBiographyItem(agentId: string, biographyItemId: string, payload: z.infer<typeof biographyLinkPayloadSchema>): BiographyRecord {
+  attachBiographyItem(agentId: string, biographyItemId: string, payload: z.input<typeof biographyLinkPayloadSchema>): BiographyRecord {
     const existing = this.repository.getByAgentId(agentId);
     if (!existing) {
       throw new Error('Biography not found');
