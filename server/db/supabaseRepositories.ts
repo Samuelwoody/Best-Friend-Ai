@@ -335,7 +335,8 @@ function fromScenarioRow(row: Record<string, unknown>): LabScenario {
     objective: row.objective as string,
     prompt: row.prompt as string,
     tags: (row.tags ?? []) as string[],
-    difficulty: row.difficulty as LabScenario['difficulty']
+    difficulty: row.difficulty as LabScenario['difficulty'],
+    initiator: ((row.initiator as LabScenario['initiator']) ?? 'user') as LabScenario['initiator']
   };
 }
 

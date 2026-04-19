@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const scenarioDifficultyEnum = z.enum(['introductory', 'intermediate', 'advanced']);
+export const scenarioInitiatorEnum = z.enum(['user', 'agent']);
 
 export const scenarioSchema = z.object({
   id: z.string(),
@@ -9,7 +10,8 @@ export const scenarioSchema = z.object({
   objective: z.string(),
   prompt: z.string(),
   tags: z.array(z.string()).default([]),
-  difficulty: scenarioDifficultyEnum
+  difficulty: scenarioDifficultyEnum,
+  initiator: scenarioInitiatorEnum.default('user')
 });
 
 export const startSessionSchema = z.object({
@@ -56,7 +58,8 @@ const scenarios: LabScenario[] = [
     objective: 'Set a respectful boundary without damaging collaboration.',
     prompt: 'Respond to your teammate with a clear and emotionally intelligent boundary statement.',
     tags: ['boundaries', 'communication', 'workplace'],
-    difficulty: 'intermediate'
+    difficulty: 'intermediate',
+    initiator: 'agent'
   },
   {
     id: 'scenario-supportive-listening',
@@ -65,7 +68,8 @@ const scenarios: LabScenario[] = [
     objective: 'Demonstrate empathy without minimizing their emotions.',
     prompt: 'Write your immediate response as if you are in a private conversation with your friend.',
     tags: ['empathy', 'grief', 'listening'],
-    difficulty: 'introductory'
+    difficulty: 'introductory',
+    initiator: 'agent'
   },
   {
     id: 'scenario-accountability-repair',
@@ -74,7 +78,8 @@ const scenarios: LabScenario[] = [
     objective: 'Own your mistake and propose a concrete repair plan.',
     prompt: 'Craft a response that validates impact, accepts responsibility, and proposes next steps.',
     tags: ['repair', 'accountability', 'relationships'],
-    difficulty: 'advanced'
+    difficulty: 'advanced',
+    initiator: 'user'
   }
 ];
 

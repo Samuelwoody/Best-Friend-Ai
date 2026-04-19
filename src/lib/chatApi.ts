@@ -4,18 +4,28 @@ export interface ChatMessage {
 }
 
 interface StreamOptions {
-  message: string;
+  message?: string;
   history: ChatMessage[];
   agentId?: string;
+  scenarioId?: string;
+  isOpening?: boolean;
   signal?: AbortSignal;
   onChunk: (text: string) => void;
 }
 
-export async function streamChat({ message, history, agentId, signal, onChunk }: StreamOptions): Promise<void> {
+export async function streamChat({
+  message,
+  history,
+  agentId,
+  scenarioId,
+  isOpening,
+  signal,
+  onChunk
+}: StreamOptions): Promise<void> {
   const response = await fetch('/api/chat/stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, history, agentId }),
+    body: JSON.stringify({ message, history, agentId, scenarioId, isOpening }),
     signal
   });
 

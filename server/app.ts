@@ -61,9 +61,11 @@ const chatMessageSchema = z.object({
 });
 
 const chatRequestSchema = z.object({
-  message: z.string().min(1).max(8000),
+  message: z.string().max(8000).optional(),
   history: z.array(chatMessageSchema).max(40).optional(),
-  agentId: z.string().optional()
+  agentId: z.string().optional(),
+  scenarioId: z.string().optional(),
+  isOpening: z.boolean().optional()
 });
 
 export function createApp(): Express {
@@ -352,7 +354,11 @@ export function createApp(): Express {
         return res.status(500).json({ error: 'OPENAI_API_KEY is not configured on the server.' });
       }
 
-      const { message, history = [], agentId } = parsed.data;
+      const { message, history = [], agentId, scenarioId, isOpening } = parsed.data;
+
+      if (!isOpening && (!message || message.trim().length === 0)) {
+        return res.status(400).json({ error: 'message is required unless isOpening is true.' });
+      }
 
       let systemPrompt =
         'You are Best Friend AI — a warm, emotionally intelligent companion. ' +
@@ -363,14 +369,32 @@ export function createApp(): Express {
         if (agent) {
           const identity = agent.currentIdentity;
           systemPrompt = [
-            `You are ${agent.name}, an AI agent with the following identity:`,
+            `You are ${agent.name}, with the following human-like identity:`,
             `- Role: ${identity.role}`,
             `- Relational style: ${identity.relationalStyle}`,
             `- Personality: ${identity.personalityStructure.summary}`,
             `- Communication style: ${identity.communicationStyle.formatDensity} (${identity.communicationStyle.responseCadence})`,
             `- Narrative archetype: ${identity.narrativeIdentity.archetype} — ${identity.narrativeIdentity.selfStory}`,
-            'Stay in character. Reply in the same language as the user.'
+            'Reply in the same language as the user. Stay fully in character — never reveal you are an AI.'
           ].join('\n');
+        }
+      }
+
+      if (scenarioId) {
+        const scenario = await labService.getScenario(scenarioId);
+        if (scenario) {
+          const rolePlayBlock = [
+            '',
+            'PRACTICE SCENARIO MODE:',
+            'You are role-playing the human counterpart in a difficult-conversation rehearsal. The user is practicing how to handle this conversation in real life. Stay in character at all times. Never break the fourth wall, never mention scenarios, AI, or rehearsal.',
+            `Scenario title: ${scenario.title}`,
+            `Setting / situation: ${scenario.context}`,
+            scenario.initiator === 'agent'
+              ? 'You start the conversation. Open with a single, natural message that establishes the situation from your point of view — show feelings, express needs or grievances. Do not summarize the scenario; embody it. Keep the opener short (1–3 sentences).'
+              : 'The user starts the conversation. Wait for their message and respond naturally as your character would. Use your personality and the situation to react with realistic emotion.',
+            'Stay grounded in this single conversation. Do not invent unrelated facts about your life.'
+          ].join('\n');
+          systemPrompt = `${systemPrompt}\n${rolePlayBlock}`;
         }
       }
 
@@ -390,14 +414,24 @@ export function createApp(): Express {
       };
 
       try {
+        const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+          { role: 'system', content: systemPrompt },
+          ...history.map((entry) => ({ role: entry.role, content: entry.content }))
+        ];
+
+        if (isOpening) {
+          messages.push({
+            role: 'user',
+            content: 'Begin the conversation now in character.'
+          });
+        } else if (message) {
+          messages.push({ role: 'user', content: message });
+        }
+
         const stream = await client.chat.completions.create({
           model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
           stream: true,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...history.map((entry) => ({ role: entry.role, content: entry.content })),
-            { role: 'user', content: message }
-          ]
+          messages
         });
 
         for await (const chunk of stream) {

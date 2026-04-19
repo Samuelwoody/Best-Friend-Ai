@@ -1,4 +1,5 @@
 export type ScenarioDifficulty = 'introductory' | 'intermediate' | 'advanced';
+export type ScenarioInitiator = 'user' | 'agent';
 
 export interface LabScenario {
   id: string;
@@ -8,6 +9,7 @@ export interface LabScenario {
   prompt: string;
   tags: string[];
   difficulty: ScenarioDifficulty;
+  initiator: ScenarioInitiator;
 }
 
 export interface LabSessionEvent {
