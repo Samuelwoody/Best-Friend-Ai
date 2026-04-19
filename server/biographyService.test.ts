@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { BiographyEngineService } from './biographyService';
-import { OrchestratorService } from './orchestratorService';
-import { sampleBiographyInput } from './fixtures/biographyFixture';
+import { BiographyEngineService } from './biographyService.js';
+import { OrchestratorService } from './orchestratorService.js';
+import { sampleBiographyInput } from './fixtures/biographyFixture.js';
 
 test('generates and stores structured biography for an agent', async () => {
   const service = new BiographyEngineService();

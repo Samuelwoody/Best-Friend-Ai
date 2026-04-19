@@ -1,4 +1,4 @@
-import { AgentIdentityRevision, AgentSynthesisService, FinalAgentCreationInput } from './agentSynthesisService';
+import { AgentIdentityRevision, AgentSynthesisService, FinalAgentCreationInput } from './agentSynthesisService.js';
 
 export interface StoredAgent {
   id: string;

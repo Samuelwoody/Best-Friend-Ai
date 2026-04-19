@@ -1,4 +1,4 @@
-import type { BiographyEngineService } from './biographyService';
+import type { BiographyEngineService } from './biographyService.js';
 
 export interface OrchestrationBiographyContext {
   agentId: string;

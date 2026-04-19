@@ -11,29 +11,29 @@ import {
   relationalStyleEnum,
   roleEnum,
   worldviewDepthEnum
-} from './agentSynthesisService';
-import { AgentRegistryService, InMemoryAgentRepository } from './agentRegistryService';
+} from './agentSynthesisService.js';
+import { AgentRegistryService, InMemoryAgentRepository } from './agentRegistryService.js';
 import {
   BiographyEngineService,
   InMemoryBiographyRepository,
   biographyLinkPayloadSchema,
   biographyRevisionSchema
-} from './biographyService';
+} from './biographyService.js';
 import {
   HumanComplexityLabService,
   InMemoryLabRepository,
   sessionEventSchema,
   startSessionSchema
-} from './labService';
-import { OrchestratorService } from './orchestratorService';
-import { InMemoryDraftRepository, type DraftRepository } from './draftStore';
-import { getSupabaseClient, isSupabaseConfigured } from './db/supabase';
+} from './labService.js';
+import { OrchestratorService } from './orchestratorService.js';
+import { InMemoryDraftRepository, type DraftRepository } from './draftStore.js';
+import { getSupabaseClient, isSupabaseConfigured } from './db/supabase.js';
 import {
   SupabaseAgentRepository,
   SupabaseBiographyRepository,
   SupabaseDraftRepository,
   SupabaseLabRepository
-} from './db/supabaseRepositories';
+} from './db/supabaseRepositories.js';
 
 const draftSchema = z.object({
   role: roleEnum.optional(),

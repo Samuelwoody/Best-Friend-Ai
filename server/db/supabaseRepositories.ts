@@ -1,14 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { BiographyRecord, BiographyRepository } from '../biographyService';
-import type { AgentRepository, StoredAgent } from '../agentRegistryService';
+import type { BiographyRecord, BiographyRepository } from '../biographyService.js';
+import type { AgentRepository, StoredAgent } from '../agentRegistryService.js';
 import type {
   LabScenario,
   LabSession,
   LabSessionEvent,
   LabSessionRepository,
   SessionResult
-} from '../labService';
-import type { AgentDraft, DraftRepository } from '../draftStore';
+} from '../labService.js';
+import type { AgentDraft, DraftRepository } from '../draftStore.js';
 
 export class SupabaseBiographyRepository implements BiographyRepository {
   constructor(private readonly client: SupabaseClient) {}
