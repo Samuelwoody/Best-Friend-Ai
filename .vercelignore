@@ -1,0 +1,16 @@
+app/
+server/
+tests/
+memory_system/
+modules/
+services/
+shared/
+backend/
+database/
+db/
+docs/
+frontend/
+data/
+*.py
+requirements.txt
+pyproject.toml
