@@ -2,8 +2,8 @@ export interface HealthStatus {
   status: string;
   agents: number;
   drafts: number;
-  biographies: number;
   openaiConfigured: boolean;
+  supabaseConfigured: boolean;
 }
 
 export async function getHealth(): Promise<HealthStatus> {

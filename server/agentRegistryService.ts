@@ -10,17 +10,52 @@ export interface StoredAgent {
   revisions: AgentIdentityRevision[];
 }
 
-export class AgentRegistryService {
+export interface AgentRepository {
+  list(): Promise<StoredAgent[]>;
+  findById(agentId: string): Promise<StoredAgent | undefined>;
+  save(agent: StoredAgent): Promise<StoredAgent>;
+  count(): Promise<number>;
+}
+
+export class InMemoryAgentRepository implements AgentRepository {
   private readonly agents: StoredAgent[] = [];
 
-  constructor(private readonly synthesisService: AgentSynthesisService) {}
+  async list(): Promise<StoredAgent[]> {
+    return this.agents.slice();
+  }
 
-  createAgent(input: FinalAgentCreationInput): StoredAgent {
+  async findById(agentId: string): Promise<StoredAgent | undefined> {
+    return this.agents.find((agent) => agent.id === agentId);
+  }
+
+  async save(agent: StoredAgent): Promise<StoredAgent> {
+    const existingIndex = this.agents.findIndex((candidate) => candidate.id === agent.id);
+    if (existingIndex >= 0) {
+      this.agents[existingIndex] = agent;
+    } else {
+      this.agents.push(agent);
+    }
+    return agent;
+  }
+
+  async count(): Promise<number> {
+    return this.agents.length;
+  }
+}
+
+export class AgentRegistryService {
+  constructor(
+    private readonly synthesisService: AgentSynthesisService,
+    private readonly repository: AgentRepository = new InMemoryAgentRepository()
+  ) {}
+
+  async createAgent(input: FinalAgentCreationInput): Promise<StoredAgent> {
     const now = new Date().toISOString();
     const revision = this.synthesisService.synthesize(input, 1);
+    const existingCount = await this.repository.count();
     const agent: StoredAgent = {
       id: crypto.randomUUID(),
-      name: input.displayName ?? `Agent ${this.agents.length + 1}`,
+      name: input.displayName ?? `Agent ${existingCount + 1}`,
       createdAt: now,
       updatedAt: now,
       revisionVersion: revision.revisionVersion,
@@ -28,11 +63,19 @@ export class AgentRegistryService {
       revisions: [revision]
     };
 
-    this.agents.push(agent);
+    await this.repository.save(agent);
     return agent;
   }
 
-  listAgents(): StoredAgent[] {
-    return this.agents;
+  async listAgents(): Promise<StoredAgent[]> {
+    return this.repository.list();
+  }
+
+  async findAgent(agentId: string): Promise<StoredAgent | undefined> {
+    return this.repository.findById(agentId);
+  }
+
+  async countAgents(): Promise<number> {
+    return this.repository.count();
   }
 }

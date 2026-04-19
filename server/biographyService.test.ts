@@ -4,9 +4,9 @@ import { BiographyEngineService } from './biographyService';
 import { OrchestratorService } from './orchestratorService';
 import { sampleBiographyInput } from './fixtures/biographyFixture';
 
-test('generates and stores structured biography for an agent', () => {
+test('generates and stores structured biography for an agent', async () => {
   const service = new BiographyEngineService();
-  const biography = service.generateInitialBiography(sampleBiographyInput);
+  const biography = await service.generateInitialBiography(sampleBiographyInput);
 
   assert.equal(biography.agentId, sampleBiographyInput.agentId);
   assert.equal(biography.items.length, 7);
@@ -17,19 +17,19 @@ test('generates and stores structured biography for an agent', () => {
   assert.ok(biography.items.every((item) => item.narrativeAccessibility >= 0 && item.narrativeAccessibility <= 1));
 });
 
-test('supports revision and attachment for future memory/media linkage', () => {
+test('supports revision and attachment for future memory/media linkage', async () => {
   const service = new BiographyEngineService();
-  const biography = service.generateInitialBiography(sampleBiographyInput);
+  const biography = await service.generateInitialBiography(sampleBiographyInput);
   const firstItem = biography.items[0];
 
-  const revised = service.reviseBiographyItem(sampleBiographyInput.agentId, firstItem.id, {
+  const revised = await service.reviseBiographyItem(sampleBiographyInput.agentId, firstItem.id, {
     salience: 0.95,
     currentBehavioralEffect: `${firstItem.currentBehavioralEffect} Uses ritualized check-ins during user stress spikes.`
   });
 
   assert.equal(revised.version, 2);
 
-  const attached = service.attachBiographyItem(sampleBiographyInput.agentId, firstItem.id, {
+  const attached = await service.attachBiographyItem(sampleBiographyInput.agentId, firstItem.id, {
     targetType: 'memory',
     targetId: 'memory-episode-001',
     relation: 'reinforces-pattern'
@@ -40,12 +40,12 @@ test('supports revision and attachment for future memory/media linkage', () => {
   assert.equal(attached.attachments[0]?.targetType, 'memory');
 });
 
-test('exposes orchestration query surface', () => {
+test('exposes orchestration query surface', async () => {
   const biographyService = new BiographyEngineService();
-  biographyService.generateInitialBiography(sampleBiographyInput);
+  await biographyService.generateInitialBiography(sampleBiographyInput);
 
   const orchestrator = new OrchestratorService(biographyService);
-  const biographyContext = orchestrator.getAgentBiographyContext(sampleBiographyInput.agentId);
+  const biographyContext = await orchestrator.getAgentBiographyContext(sampleBiographyInput.agentId);
 
   assert.ok(biographyContext);
   assert.equal(biographyContext?.agentId, sampleBiographyInput.agentId);

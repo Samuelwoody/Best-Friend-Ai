@@ -15,8 +15,8 @@ export interface OrchestrationBiographyContext {
 export class OrchestratorService {
   constructor(private readonly biographyEngine: BiographyEngineService) {}
 
-  getAgentBiographyContext(agentId: string): OrchestrationBiographyContext | undefined {
-    const biography = this.biographyEngine.getBiographyForOrchestration(agentId);
+  async getAgentBiographyContext(agentId: string): Promise<OrchestrationBiographyContext | undefined> {
+    const biography = await this.biographyEngine.getBiographyForOrchestration(agentId);
     if (!biography) {
       return undefined;
     }

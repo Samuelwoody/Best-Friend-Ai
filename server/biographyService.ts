@@ -82,18 +82,18 @@ export const biographyLinkPayloadSchema = z.object({
 });
 
 export interface BiographyRepository {
-  getByAgentId(agentId: string): BiographyRecord | undefined;
-  save(record: BiographyRecord): BiographyRecord;
+  getByAgentId(agentId: string): Promise<BiographyRecord | undefined>;
+  save(record: BiographyRecord): Promise<BiographyRecord>;
 }
 
 export class InMemoryBiographyRepository implements BiographyRepository {
   private records = new Map<string, BiographyRecord>();
 
-  getByAgentId(agentId: string): BiographyRecord | undefined {
+  async getByAgentId(agentId: string): Promise<BiographyRecord | undefined> {
     return this.records.get(agentId);
   }
 
-  save(record: BiographyRecord): BiographyRecord {
+  async save(record: BiographyRecord): Promise<BiographyRecord> {
     this.records.set(record.agentId, record);
     return record;
   }
@@ -102,8 +102,8 @@ export class InMemoryBiographyRepository implements BiographyRepository {
 export class BiographyEngineService {
   constructor(private readonly repository: BiographyRepository = new InMemoryBiographyRepository()) {}
 
-  generateInitialBiography(input: BiographyGenerationInput): BiographyRecord {
-    const existing = this.repository.getByAgentId(input.agentId);
+  async generateInitialBiography(input: BiographyGenerationInput): Promise<BiographyRecord> {
+    const existing = await this.repository.getByAgentId(input.agentId);
     if (existing) {
       return existing;
     }
@@ -122,19 +122,20 @@ export class BiographyEngineService {
     return this.repository.save(record);
   }
 
-  getBiography(agentId: string): BiographyRecord | undefined {
+  async getBiography(agentId: string): Promise<BiographyRecord | undefined> {
     return this.repository.getByAgentId(agentId);
   }
 
-  getBiographyForOrchestration(agentId: string):
+  async getBiographyForOrchestration(agentId: string): Promise<
     | {
         agentId: string;
         biographyVersion: number;
         highSalienceItems: BiographyItem[];
         guardedItems: BiographyItem[];
       }
-    | undefined {
-    const biography = this.repository.getByAgentId(agentId);
+    | undefined
+  > {
+    const biography = await this.repository.getByAgentId(agentId);
     if (!biography) {
       return undefined;
     }
@@ -153,8 +154,12 @@ export class BiographyEngineService {
     };
   }
 
-  reviseBiographyItem(agentId: string, itemId: string, revision: z.infer<typeof biographyRevisionSchema>): BiographyRecord {
-    const existing = this.repository.getByAgentId(agentId);
+  async reviseBiographyItem(
+    agentId: string,
+    itemId: string,
+    revision: z.infer<typeof biographyRevisionSchema>
+  ): Promise<BiographyRecord> {
+    const existing = await this.repository.getByAgentId(agentId);
     if (!existing) {
       throw new Error('Biography not found');
     }
@@ -186,8 +191,12 @@ export class BiographyEngineService {
     return this.repository.save(updated);
   }
 
-  attachBiographyItem(agentId: string, biographyItemId: string, payload: z.input<typeof biographyLinkPayloadSchema>): BiographyRecord {
-    const existing = this.repository.getByAgentId(agentId);
+  async attachBiographyItem(
+    agentId: string,
+    biographyItemId: string,
+    payload: z.input<typeof biographyLinkPayloadSchema>
+  ): Promise<BiographyRecord> {
+    const existing = await this.repository.getByAgentId(agentId);
     if (!existing) {
       throw new Error('Biography not found');
     }

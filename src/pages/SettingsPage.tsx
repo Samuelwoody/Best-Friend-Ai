@@ -30,15 +30,22 @@ export const SettingsPage = () => {
           <span>OpenAI API key (OPENAI_API_KEY)</span>
         </div>
         <div className="stat-tile">
+          <strong>
+            <span
+              className={`status-dot ${health?.supabaseConfigured ? 'status-dot-ok' : 'status-dot-warn'}`}
+            />
+            {health?.supabaseConfigured ? 'Active' : 'Not configured'}
+          </strong>
+          <span>Supabase (SUPABASE_URL + SERVICE_ROLE_KEY)</span>
+        </div>
+        <div className="stat-tile">
           <strong>{health?.status ?? '—'}</strong>
           <span>Agent service status</span>
         </div>
       </div>
 
       <p style={{ color: 'var(--muted)', marginTop: '1rem' }}>
-        To change API credentials, update the environment variables in your Vercel project and redeploy.
-        In-memory state (agents, drafts, sessions) resets on cold starts — attach a persistent store for
-        production workloads.
+        Update credentials in your Vercel project environment variables and redeploy to apply changes.
       </p>
     </PageContainer>
   );

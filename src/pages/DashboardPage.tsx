@@ -26,10 +26,6 @@ export const DashboardPage = () => {
           <span>Agents created</span>
         </div>
         <div className="stat-tile">
-          <strong>{health?.biographies ?? '—'}</strong>
-          <span>Biographies generated</span>
-        </div>
-        <div className="stat-tile">
           <strong>{health?.drafts ?? '—'}</strong>
           <span>Draft sessions</span>
         </div>
@@ -41,6 +37,15 @@ export const DashboardPage = () => {
             {health?.openaiConfigured ? 'Connected' : 'Missing key'}
           </strong>
           <span>OpenAI integration</span>
+        </div>
+        <div className="stat-tile">
+          <strong>
+            <span
+              className={`status-dot ${health?.supabaseConfigured ? 'status-dot-ok' : 'status-dot-warn'}`}
+            />
+            {health?.supabaseConfigured ? 'Connected' : 'Missing key'}
+          </strong>
+          <span>Supabase persistence</span>
         </div>
       </div>
 
