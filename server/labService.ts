@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const scenarioDifficultyEnum = z.enum(['introductory', 'intermediate', 'advanced']);
+export const scenarioInitiatorEnum = z.enum(['user', 'agent']);
 
 export const scenarioSchema = z.object({
   id: z.string(),
@@ -9,7 +10,8 @@ export const scenarioSchema = z.object({
   objective: z.string(),
   prompt: z.string(),
   tags: z.array(z.string()).default([]),
-  difficulty: scenarioDifficultyEnum
+  difficulty: scenarioDifficultyEnum,
+  initiator: scenarioInitiatorEnum.default('user')
 });
 
 export const startSessionSchema = z.object({
@@ -56,7 +58,8 @@ const scenarios: LabScenario[] = [
     objective: 'Set a respectful boundary without damaging collaboration.',
     prompt: 'Respond to your teammate with a clear and emotionally intelligent boundary statement.',
     tags: ['boundaries', 'communication', 'workplace'],
-    difficulty: 'intermediate'
+    difficulty: 'intermediate',
+    initiator: 'agent'
   },
   {
     id: 'scenario-supportive-listening',
@@ -65,7 +68,8 @@ const scenarios: LabScenario[] = [
     objective: 'Demonstrate empathy without minimizing their emotions.',
     prompt: 'Write your immediate response as if you are in a private conversation with your friend.',
     tags: ['empathy', 'grief', 'listening'],
-    difficulty: 'introductory'
+    difficulty: 'introductory',
+    initiator: 'agent'
   },
   {
     id: 'scenario-accountability-repair',
@@ -74,102 +78,181 @@ const scenarios: LabScenario[] = [
     objective: 'Own your mistake and propose a concrete repair plan.',
     prompt: 'Craft a response that validates impact, accepts responsibility, and proposes next steps.',
     tags: ['repair', 'accountability', 'relationships'],
-    difficulty: 'advanced'
+    difficulty: 'advanced',
+    initiator: 'user'
   }
 ];
 
-export class HumanComplexityLabService {
+export interface LabSessionRepository {
+  listScenarios(): Promise<LabScenario[]>;
+  getScenario(scenarioId: string): Promise<LabScenario | undefined>;
+  createSession(input: { scenarioId: string; participantId?: string }): Promise<LabSession>;
+  getSession(sessionId: string): Promise<LabSession | undefined>;
+  listEvents(sessionId: string): Promise<LabSessionEvent[]>;
+  appendEvent(
+    sessionId: string,
+    payload: { responseText: string; emotionalState?: string; confidence?: number }
+  ): Promise<LabSessionEvent>;
+  completeSession(sessionId: string, summary: string): Promise<SessionResult | undefined>;
+  getResult(sessionId: string): Promise<SessionResult | undefined>;
+}
+
+export class InMemoryLabRepository implements LabSessionRepository {
   private sessions = new Map<string, LabSession>();
 
-  listScenarios(): LabScenario[] {
-    return scenarios;
+  async listScenarios(): Promise<LabScenario[]> {
+    return scenarios.slice();
   }
 
-  getScenario(scenarioId: string): LabScenario | undefined {
+  async getScenario(scenarioId: string): Promise<LabScenario | undefined> {
     return scenarios.find((scenario) => scenario.id === scenarioId);
   }
 
-  startSession(payload: z.infer<typeof startSessionSchema>): LabSession {
+  async createSession(input: { scenarioId: string; participantId?: string }): Promise<LabSession> {
     const session: LabSession = {
       id: crypto.randomUUID(),
-      scenarioId: payload.scenarioId,
-      participantId: payload.participantId,
+      scenarioId: input.scenarioId,
+      participantId: input.participantId,
       startedAt: new Date().toISOString(),
       status: 'active',
       events: []
     };
-
     this.sessions.set(session.id, session);
     return session;
   }
 
-  getSession(sessionId: string): LabSession | undefined {
-    return this.sessions.get(sessionId);
+  async getSession(sessionId: string): Promise<LabSession | undefined> {
+    const session = this.sessions.get(sessionId);
+    return session ? { ...session, events: session.events.slice() } : undefined;
   }
 
-  appendEvent(sessionId: string, payload: z.infer<typeof sessionEventSchema>): LabSessionEvent {
+  async listEvents(sessionId: string): Promise<LabSessionEvent[]> {
+    return this.sessions.get(sessionId)?.events.slice() ?? [];
+  }
+
+  async appendEvent(
+    sessionId: string,
+    payload: { responseText: string; emotionalState?: string; confidence?: number }
+  ): Promise<LabSessionEvent> {
     const session = this.sessions.get(sessionId);
     if (!session) {
       throw new Error('Session not found');
     }
-
     if (session.status === 'completed') {
       throw new Error('Session is already completed');
     }
-
     const event: LabSessionEvent = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
-      ...payload
+      responseText: payload.responseText,
+      emotionalState: payload.emotionalState,
+      confidence: payload.confidence
     };
-
     session.events.push(event);
     return event;
   }
 
-  completeSession(sessionId: string): SessionResult {
+  async completeSession(sessionId: string, summary: string): Promise<SessionResult | undefined> {
     const session = this.sessions.get(sessionId);
-    if (!session) {
-      throw new Error('Session not found');
-    }
-
+    if (!session) return undefined;
     if (!session.completedAt) {
       session.completedAt = new Date().toISOString();
       session.status = 'completed';
     }
-
-    return this.buildResult(session);
+    return buildResult(session, summary);
   }
 
-  getSessionResult(sessionId: string): SessionResult | undefined {
+  async getResult(sessionId: string): Promise<SessionResult | undefined> {
     const session = this.sessions.get(sessionId);
-    if (!session || !session.completedAt) {
-      return undefined;
-    }
+    if (!session || !session.completedAt) return undefined;
+    return buildResult(session);
+  }
+}
 
-    return this.buildResult(session);
+function buildResult(session: LabSession, overrideSummary?: string): SessionResult {
+  const confidenceValues = session.events
+    .map((event) => event.confidence)
+    .filter((value): value is number => typeof value === 'number');
+
+  const averageConfidence = confidenceValues.length
+    ? Number((confidenceValues.reduce((sum, value) => sum + value, 0) / confidenceValues.length).toFixed(2))
+    : null;
+
+  const summary =
+    overrideSummary ??
+    (session.events.length
+      ? `Completed with ${session.events.length} reflection entries and ${averageConfidence ?? 'no'} confidence trend data.`
+      : 'Completed without submitted reflections.');
+
+  return {
+    sessionId: session.id,
+    scenarioId: session.scenarioId,
+    completedAt: session.completedAt ?? new Date().toISOString(),
+    eventCount: session.events.length,
+    averageConfidence,
+    summary
+  };
+}
+
+function buildSummaryForEvents(events: LabSessionEvent[]): string {
+  const confidenceValues = events
+    .map((event) => event.confidence)
+    .filter((value): value is number => typeof value === 'number');
+  const averageConfidence = confidenceValues.length
+    ? Number((confidenceValues.reduce((sum, value) => sum + value, 0) / confidenceValues.length).toFixed(2))
+    : null;
+  return events.length
+    ? `Completed with ${events.length} reflection entries and ${averageConfidence ?? 'no'} confidence trend data.`
+    : 'Completed without submitted reflections.';
+}
+
+export class HumanComplexityLabService {
+  constructor(private readonly repository: LabSessionRepository = new InMemoryLabRepository()) {}
+
+  async listScenarios(): Promise<LabScenario[]> {
+    return this.repository.listScenarios();
   }
 
-  private buildResult(session: LabSession): SessionResult {
-    const confidenceValues = session.events
-      .map((event) => event.confidence)
-      .filter((value): value is number => typeof value === 'number');
+  async getScenario(scenarioId: string): Promise<LabScenario | undefined> {
+    return this.repository.getScenario(scenarioId);
+  }
 
-    const averageConfidence = confidenceValues.length
-      ? Number((confidenceValues.reduce((sum, value) => sum + value, 0) / confidenceValues.length).toFixed(2))
-      : null;
+  async startSession(payload: z.infer<typeof startSessionSchema>): Promise<LabSession> {
+    return this.repository.createSession({
+      scenarioId: payload.scenarioId,
+      participantId: payload.participantId
+    });
+  }
 
-    const summary = session.events.length
-      ? `Completed with ${session.events.length} reflection entries and ${averageConfidence ?? 'no'} confidence trend data.`
-      : 'Completed without submitted reflections.';
+  async getSession(sessionId: string): Promise<LabSession | undefined> {
+    return this.repository.getSession(sessionId);
+  }
 
-    return {
-      sessionId: session.id,
-      scenarioId: session.scenarioId,
-      completedAt: session.completedAt ?? new Date().toISOString(),
-      eventCount: session.events.length,
-      averageConfidence,
-      summary
-    };
+  async appendEvent(
+    sessionId: string,
+    payload: z.infer<typeof sessionEventSchema>
+  ): Promise<LabSessionEvent> {
+    const session = await this.repository.getSession(sessionId);
+    if (!session) {
+      throw new Error('Session not found');
+    }
+    if (session.status === 'completed') {
+      throw new Error('Session is already completed');
+    }
+    return this.repository.appendEvent(sessionId, payload);
+  }
+
+  async completeSession(sessionId: string): Promise<SessionResult> {
+    const events = await this.repository.listEvents(sessionId);
+    const summary = buildSummaryForEvents(events);
+    const result = await this.repository.completeSession(sessionId, summary);
+    if (!result) {
+      throw new Error('Session not found');
+    }
+    return result;
+  }
+
+  async getSessionResult(sessionId: string): Promise<SessionResult | undefined> {
+    return this.repository.getResult(sessionId);
   }
 }

@@ -1,4 +1,4 @@
-import type { BiographyGenerationInput } from '../biographyService';
+import type { BiographyGenerationInput } from '../biographyService.js';
 
 export const sampleBiographyInput: BiographyGenerationInput = {
   agentId: 'agent-sample-001',
