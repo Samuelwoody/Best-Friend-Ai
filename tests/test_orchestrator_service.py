@@ -65,7 +65,7 @@ def test_orchestrator_route_builds_decision_and_context():
     )
 
     response = client.post(
-        "/chat/messages/orchestrate",
+        "/api/chat/messages/orchestrate",
         json={
             "conversation_id": str(conversation.id),
             "role": "user",
@@ -114,7 +114,7 @@ def test_existing_chat_add_message_route_still_works():
     )
 
     response = client.post(
-        "/chat/messages",
+        "/api/chat/messages",
         json={
             "conversation_id": str(conversation.id),
             "role": "user",

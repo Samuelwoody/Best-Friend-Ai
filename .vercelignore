@@ -1,4 +1,3 @@
-/app/
 /tests/
 /memory_system/
 /modules/
@@ -9,9 +8,6 @@
 /db/
 /docs/
 /data/
-*.py
-requirements.txt
-pyproject.toml
 /AGENTS.md
 /ARCHITECTURE.md
 /DOMAIN_MODEL.md

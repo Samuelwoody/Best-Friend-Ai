@@ -38,7 +38,7 @@ def test_interaction_analysis_tracks_metrics_and_insights():
         )
     )
 
-    response = client.get(f"/interaction-analysis/conversations/{conversation.id}")
+    response = client.get(f"/api/interaction-analysis/conversations/{conversation.id}")
 
     assert response.status_code == 200
     payload = response.json()["data"]
@@ -60,7 +60,7 @@ def test_interaction_analysis_handles_empty_user_message_stream():
         )
     )
 
-    response = client.get(f"/interaction-analysis/conversations/{conversation.id}")
+    response = client.get(f"/api/interaction-analysis/conversations/{conversation.id}")
 
     assert response.status_code == 200
     payload = response.json()["data"]

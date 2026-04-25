@@ -9,7 +9,7 @@ client = TestClient(app)
 def test_identity_generation_and_media_plan_flow():
     owner_id = "f1f8fd8d-baa5-4a50-8de1-6f61f41234ab"
     create_response = client.post(
-        "/agents",
+        "/api/agents",
         json={
             "name": "Nova",
             "description": "Friendly mentor for daily planning",
@@ -20,7 +20,7 @@ def test_identity_generation_and_media_plan_flow():
     agent_id = create_response.json()["data"]["id"]
 
     generate_response = client.post(
-        f"/agents/{agent_id}/identity/generate",
+        f"/api/agents/{agent_id}/identity/generate",
         json={
             "enable_media_identity_generation": True,
             "image_style_hint": "clean editorial",
@@ -31,10 +31,10 @@ def test_identity_generation_and_media_plan_flow():
     generated_identity = generate_response.json()["data"]
     assert generated_identity["contract_version"] == "v1"
 
-    read_response = client.get(f"/agents/{agent_id}/identity")
+    read_response = client.get(f"/api/agents/{agent_id}/identity")
     assert read_response.status_code == 200
 
-    media_plan_response = client.post(f"/agents/{agent_id}/identity/media-plan")
+    media_plan_response = client.post(f"/api/agents/{agent_id}/identity/media-plan")
     assert media_plan_response.status_code == 200
     tasks = media_plan_response.json()["data"]["tasks"]
     assert {task["task_type"] for task in tasks} == {"image", "voice"}
