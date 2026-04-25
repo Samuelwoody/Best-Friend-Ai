@@ -2,6 +2,7 @@ from app.models.orchestration_schemas import FeatureFlags
 from app.services.agent_identity_service import AgentIdentityService
 from app.services.agent_service import AgentService
 from app.services.auth_service import AuthService
+from app.services.biography_service import BiographyEngineService
 from app.services.conversation_service import ConversationService
 from app.services.interaction_analysis_service import InteractionAnalysisService
 from app.services.inner_multiplicity_service import InnerMultiplicityService
@@ -25,6 +26,7 @@ class ServiceContainer:
         self.auth_service = AuthService(self.user_service)
         self.agent_service = AgentService()
         self.agent_identity_service = AgentIdentityService()
+        self.biography_engine = BiographyEngineService()
         self.conversation_service = ConversationService()
         self.memory_service = MemoryService()
         self.inner_multiplicity_service = InnerMultiplicityService()
