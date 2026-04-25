@@ -125,3 +125,24 @@ class OrchestrationResult(BaseModel):
     assistant_message: MessageRead
     trace: OrchestrationTrace
     metadata: Dict[str, str] = Field(default_factory=dict)
+
+
+class InteractionAnalysisMetric(BaseModel):
+    message_id: UUID
+    sequence_index: int
+    emotional_shift: float
+    openness: float
+    engagement: float
+
+
+class InteractionAnalysisInsight(BaseModel):
+    category: str
+    summary: str
+    confidence: float
+
+
+class InteractionAnalysisReport(BaseModel):
+    conversation_id: UUID
+    analyzed_messages: int
+    metrics: List[InteractionAnalysisMetric] = Field(default_factory=list)
+    insights: List[InteractionAnalysisInsight] = Field(default_factory=list)
